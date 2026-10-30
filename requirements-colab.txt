@@ -1,0 +1,2 @@
+# Google Colab normally ships with PyTorch + CUDA. Install only project dependencies.
+-r requirements.txt

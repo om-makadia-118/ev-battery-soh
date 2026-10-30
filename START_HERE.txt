@@ -1,0 +1,43 @@
+EV BATTERY SOH PROJECT — START HERE
+
+1. Read docs/DATASETS.md. The original report's inventory needs corrections/verification:
+   - NASA B0005/B0006/B0007/B0018 = 4 downloaded cells, not 28.
+   - XJTU 15 XJTU_3C_battery-*.pkl = Batch 2 only, not all 55 cells.
+   - CALCE target is CS2 cycling data, not Storage Data.
+   - Oxford .mat is readable from Python; MATLAB is not required.
+   - MATR is the 124-cell Severson 2019 dataset.
+
+2. Windows CPU setup:
+   py -3.11 -m venv .venv
+   .\.venv\Scripts\Activate.ps1
+   pip install -r requirements.txt
+   pip install -e . --no-deps
+
+3. Run tests:
+   $env:PYTHONPATH = "."
+   pytest -q
+
+4. Put source files in their dataset folders:
+   - NASA .mat files: data/raw/nasa/
+   - Oxford .mat: data/raw/oxford/
+   - all 15 XJTU pickle files: data/raw/xjtu/
+   - extract the 15 CALCE CS2 ZIPs under data/raw/calce/, retaining CS2_XX folders and original date-named files
+   - MATR three batch .mat files: data/raw/matr/
+
+5. Inspect one file from each unfamiliar format:
+   python -m battery_soh inspect --path "data/raw/xjtu/XJTU_3C_battery-1.pkl"
+   python -m battery_soh inspect --path "data/raw/calce/CS2_33/CS2_33_1_10_11.xlsx"
+   python -m battery_soh inspect --path "data/raw/calce/CS2_8/CS2_8_1_19_10.txt"
+   # Also inspect one CS2_21 .txt file before the full run.
+
+6. Prepare the real dataset:
+   python -m battery_soh prepare --raw data/raw
+   CALCE Arbin Excel logs and CADEX tab-separated .txt logs are supported. The CADEX parser has been validated against a real CS2_8 file; inspect one CS2_21 file to confirm its layout before the full run.
+
+7. Run classical models locally on CPU:
+   python scripts/run_classical_cpu.py --seeds 42
+
+8. Run LSTM/CNN/Transformer in Google Colab:
+   Open notebooks/colab_deep_learning.ipynb and follow its first Markdown cell.
+
+Do not present synthetic demo results as research findings. Inspect failures.csv and verify battery splits before reporting any score.
