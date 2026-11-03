@@ -17,20 +17,20 @@ def _write_calce_workbook(path, cycles, start_time):
         discharge_end_v = 2.7 if full_discharge else 3.77
         # Rest before charge.
         for voltage in [3.8, 3.85]:
-            rows.append([point, time_s, start + pd.Timedelta(seconds=time_s),
+            rows.append([point, time_s, start + pd.to_timedelta(time_s, unit='s'),
                          30.0, 1, cycle_no, 0.0, voltage,
                          qc_total, qd_total, 0.0, 0.0, 0.0, 0.0, 0, 0.0, 0.0])
             point += 1
             time_s += 30
         # Charge step.
         qc_total += 0.1
-        rows.append([point, time_s, start + pd.Timedelta(seconds=time_s),
+        rows.append([point, time_s, start + pd.to_timedelta(time_s, unit='s'),
                      30.0, 2, cycle_no, 0.55, charge_v,
                      qc_total, qd_total, 0.4, 0.0, 0.0, 0.0, 0, 0.0, 0.0])
         point += 1
         time_s += 30
         # Rest at charge voltage.
-        rows.append([point, time_s, start + pd.Timedelta(seconds=time_s),
+        rows.append([point, time_s, start + pd.to_timedelta(time_s, unit='s'),
                      30.0, 3, cycle_no, 0.0, charge_v,
                      qc_total, qd_total, 0.4, 0.0, 0.0, 0.0, 0, 0.0, 0.0])
         point += 1
@@ -38,7 +38,7 @@ def _write_calce_workbook(path, cycles, start_time):
         # Discharge step: cumulative counter increases from its prior value.
         for frac, voltage in zip([0.1, 0.5, 1.0], [4.0, 3.4, discharge_end_v]):
             qd_total += capacity * (frac - (0 if frac == 0.1 else (0.1 if frac == 0.5 else 0.5)))
-            rows.append([point, time_s, start + pd.Timedelta(seconds=time_s),
+            rows.append([point, time_s, start + pd.to_timedelta(time_s, unit='s'),
                          30.0, 4, cycle_no, -0.55, voltage,
                          qc_total, qd_total, 0.4, qd_total * 3.6,
                          0.0, 0.1, 0, 0.0, 0.0])

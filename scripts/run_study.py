@@ -6,6 +6,8 @@ Examples:
   python scripts/run_study.py --phase all --models mean ridge elasticnet xgboost --seeds 11 22 33 44 55
   Deep models: use notebooks/colab_deep_learning.ipynb, or pass --device cuda from a GPU runtime.
 """
+import os
+os.environ.setdefault('MPLCONFIGDIR', '/tmp/matplotlib')
 import argparse
 from pathlib import Path
 import pandas as pd
@@ -28,7 +30,7 @@ p.add_argument('--output',default='results/full_study')
 args=p.parse_args()
 if set(args.models) & {'lstm','cnn','transformer'} and args.device == 'cpu' and not args.allow_cpu_deep:
     raise SystemExit('Deep models are configured for Google Colab GPU. Open notebooks/colab_deep_learning.ipynb, or pass --device cuda. For an intentional slow CPU run, add --allow-cpu-deep.')
-df=harmonize(pd.read_csv(args.input))
+df=harmonize(pd.read_csv(args.input, low_memory=False))
 if df.dataset.nunique()!=5: raise SystemExit('The report requires exactly five confirmed source datasets.')
 out=Path(args.output);out.mkdir(parents=True,exist_ok=True)
 deep_cfg={'epochs':args.epochs,'device':args.device}

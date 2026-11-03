@@ -1,4 +1,3 @@
-@'
 # Python
 __pycache__/
 *.py[cod]
@@ -30,11 +29,12 @@ env/
 /data/interim/**
 !/data/interim/README.md
 
-# Processed datasets
+# Processed datasets (preserve schema/README)
 /data/processed/**
 !/data/processed/README.md
+!/data/processed/data_quality.csv
 
-# Model checkpoints and generated artifacts
+# Model checkpoints and large binaries
 checkpoints/
 artifacts/
 outputs/
@@ -43,6 +43,11 @@ outputs/
 *.ckpt
 *.h5
 *.onnx
+
+# Large benchmark prediction rows (>100MB GitHub limit)
+*predictions.csv
+results/pilot_matrix/
+results/full_study/adaptation/*/*/
 
 # Logs
 *.log
@@ -57,4 +62,3 @@ Thumbs.db
 # Local handoff archives
 ev_battery_soh_handoff.zip
 ev-battery-soh-project-v4*.zip
-'@ | Add-Content -Encoding utf8 .gitignore

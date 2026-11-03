@@ -1,5 +1,7 @@
 """Generate research figures; only from actual experiment outputs."""
 from pathlib import Path
+import os
+os.environ.setdefault('MPLCONFIGDIR', '/tmp/matplotlib')
 import numpy as np
 import pandas as pd
 import matplotlib
@@ -44,6 +46,20 @@ def make_figures(input_dir, out_dir=None):
             generated.append(str(filename))
             summary=scores.groupby(['experiment','model'],as_index=False)['MAE'].agg(['mean','std','count'])
             summary.to_csv(out/'score_summary.csv')
+            if 'lodo' in set(scores.experiment):
+                lodo_df = scores[scores.experiment == 'lodo']
+                lodo_pivot = lodo_df.pivot_table(index='target', columns='model', values='MAE', aggfunc='mean')
+                fig, ax = plt.subplots(figsize=(8, 4.5))
+                lodo_pivot.plot(kind='bar', ax=ax, rot=0)
+                ax.set_ylabel('LODO MAE (SOH pp)')
+                ax.set_xlabel('Held-out Target Dataset')
+                ax.set_title('Leave-One-Dataset-Out (LODO) Generalization Error')
+                ax.legend(title='Model')
+                fig.tight_layout()
+                filename = out / 'lodo_target_comparison.png'
+                fig.savefig(filename, dpi=170)
+                plt.close(fig)
+                generated.append(str(filename))
     ap=inp/'adaptation_metrics.csv'
     if ap.exists() and ap.stat().st_size:
         ad=pd.read_csv(ap)
@@ -54,13 +70,23 @@ def make_figures(input_dir, out_dir=None):
                 curve=g.groupby('k')['MAE'].mean()
                 ax.plot(curve.index,curve.values,marker='o',label=method)
             ax.set_xlabel('Number of target training batteries');ax.set_ylabel('Target MAE (SOH pp)')
-            ax.set_title('Few-shot adaptation (disjoint target test batteries)')
+            ax.set_title('Few-shot adaptation (all models average)')
             ax.legend();fig.tight_layout()
             filename=out/'adaptation_curve.png';fig.savefig(filename,dpi=170);plt.close(fig)
             generated.append(str(filename))
+            for mod, mg in ad.groupby('model'):
+                fig, ax = plt.subplots(figsize=(7, 4))
+                for method, g in mg.groupby('method'):
+                    curve = g.groupby('k')['MAE'].mean()
+                    ax.plot(curve.index, curve.values, marker='o', label=method)
+                ax.set_xlabel('Number of target training batteries'); ax.set_ylabel('Target MAE (SOH pp)')
+                ax.set_title(f'Few-shot adaptation — {mod}')
+                ax.legend(); fig.tight_layout()
+                p_mod = out / f'adaptation_curve_{mod}.png'; fig.savefig(p_mod, dpi=170); plt.close(fig)
+                generated.append(str(p_mod))
     pp=inp/'predictions.csv'
     if pp.exists() and pp.stat().st_size:
-        pred=pd.read_csv(pp)
+        pred=pd.read_csv(pp, low_memory=False)
         if 'temperature_c' in pred:
             sub=pred.dropna(subset=['temperature_c','absolute_error'])
             if len(sub)>=5:

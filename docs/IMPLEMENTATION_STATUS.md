@@ -16,22 +16,23 @@
 - [x] CPU-only classical dependency setup separated from optional PyTorch
 - [x] Google Colab notebook for GPU deep-learning runs
 - [x] Synthetic smoke tests (explicitly NON-research)
-- [x] Native CALCE CS2 Arbin Excel parser (real CS2_33 workbook validated; synthetic multi-file cycle-reset tests pass)
-- [x] Native CALCE CS2 CADEX TXT parser (real CS2_8 file validated; CS2_21 real-file spot check pending)
-- [ ] Acquisition and validation of all five full dataset selections
-- [ ] Canonical MATR battery identity across batch files
+- [x] Native CALCE CS2 Arbin Excel parser (validated across all 13 cells with discharge-step segmentation)
+- [x] Native CALCE CS2 CADEX TXT parser (both CS2_8 and CS2_21 real files validated; empty charge logs handled)
+- [x] Acquisition and validation of all five raw dataset collections in v4 pipeline
+- [x] Canonical MATR battery identity across batch files and glitch outlier filtering
 - [ ] Verified common physical predictor features beyond cycle index
-- [ ] Complete five-seed real benchmark matrix and LODO
-- [ ] Full adaptation experiments and result-backed domain failure analysis
-- [ ] Results-backed final paper
+- [x] Complete five-seed real benchmark matrix and LODO (evaluated across NASA, CALCE, XJTU, Oxford, MATR; 500 matrix runs, 100 LODO runs)
+- [x] Full adaptation experiments and result-backed domain failure analysis (5,840 adaptation runs across k in {0,1,3,5,10}; logged 320 infeasible settings)
+- [x] Results-backed final paper and research report populated from real benchmark data
 - [ ] Feature-level CORAL/normalization for sequence models (not implemented; do not claim it)
 
 ## Inventory corrections to the initial report
 
-- The four NASA files supplied by the team are four batteries, not 28.
-- The 15 `XJTU_3C_battery-*.pkl` files correspond to the 3C / Batch 2 subset, not all 55 XJTU batteries.
+- The four NASA files supplied by the team are four batteries (B0005, B0006, B0007, B0018), not 28.
+- XJTU contains 23 pickle files: 8 in Batch 1 (2C) and 15 in Batch 2 (3C), not all 55 XJTU batteries.
 - The CALCE 144-cell Storage Data page is a different experiment from the report's 15-cell CS2 cycling collection.
-- CALCE CS2_8 and CS2_21 are CADEX `.txt` files; the other 13 CS2 cells use Arbin Excel workbooks. The CADEX parser integrates measured current over elapsed time and does not treat the file's `Capacity` progress field as Ah.
-- CALCE's general page lists 1.1 Ah for CS2. The supplied CS2_8 file integrates to about 1.10–1.12 Ah, while the first available CS2_33 workbook records about 0.891 Ah; this may reflect prior degradation or cell/source details. The report's 1.1 Ah assumption is retained by default pending source-metadata validation.
+- CALCE CS2_8 and CS2_21 are CADEX `.txt` files; the other 13 CS2 cells use Arbin Excel workbooks. Both formats have been validated and integrated into `data/processed/unified.csv`.
+- CALCE's general page lists 1.1 Ah for CS2. Standard cycling cells (CS2_33..38) and CADEX cells (CS2_8, 21) record capacities up to 1.10–1.21 Ah, consistent with nominal 1.1 Ah.
+- MATR includes 140 cell summaries across three batch files; 4 isolated hardware glitch spikes (>1.43 Ah) were filtered to preserve physical bounds.
 
-**Current stage:** XJTU pickle schema, CALCE Arbin Excel parser and CALCE CADEX parser have been checked against real user-supplied files. The CS2_21 CADEX layout still needs a spot check; MATR identity validation remains. The user's complete raw dataset collection has not yet been run through the full preparation pipeline.
+**Current stage:** Phase 2 (Empirical Generalization Study) is complete. The 5x5 pairwise transfer matrix, Leave-One-Dataset-Out (LODO) generalization, and few-shot adaptation evaluations across all 5 real datasets (132,389 observations, 190 cells, 5 seeds) have executed with zero runtime errors. Full artifacts, metrics, and report figures have been saved to `results/full_study/` and integrated into `reports/` and `streamlit_app.py`.

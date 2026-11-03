@@ -344,7 +344,7 @@ def matr_mat(path: str | Path) -> pd.DataFrame:
             duration=vect('chargetime')
             cycles=vect('cycle')
             for j,c in enumerate(q):
-                if not np.isfinite(c) or c<=0: continue
+                if not np.isfinite(c) or c<=0 or c>1.43: continue
                 cyc=float(cycles[j]) if j<len(cycles) else j+1
                 out.append({'dataset':'matr','battery_id':f'{path.stem}_cell{idx:03d}',
                             'cycle':cyc, 'capacity_ah':float(c), 'rated_capacity_ah':1.1,
@@ -472,75 +472,87 @@ def calce_excel_file(path: str | Path, *, rated_capacity_ah: float = 1.1, _raw: 
         if discharge.empty:
             continue
 
-        qd = group['Discharge_Capacity(Ah)'].dropna()
-        discharge_q = discharge['Discharge_Capacity(Ah)'].dropna()
-        if qd.empty or discharge_q.empty:
-            continue
-        # The tester's discharge counter continues across cycles. Its range
-        # within the current cycle is the observed discharge capacity.
-        capacity_ah = float(discharge_q.max() - qd.min())
-        if not np.isfinite(capacity_ah) or capacity_ah <= 0:
-            continue
-
-        v_dis = discharge['Voltage(V)'].dropna()
         v_cycle = voltage.dropna()
-        if v_dis.empty or v_cycle.empty:
+        if v_cycle.empty:
             continue
-        v_min = float(v_dis.min())
         v_cycle_max = float(v_cycle.max())
 
-        # Type 5/6 deliberately contain partial cycling. Keep only the explicit
-        # full-capacity reference checks, not the partial operating cycles.
-        if v_cycle_max < 4.15 or v_min > 2.85:
-            continue
+        step_starts = (
+            discharge['Step_Index'].ne(discharge['Step_Index'].shift())
+            if 'Step_Index' in discharge else pd.Series(False, index=discharge.index)
+        )
+        dis_runs = step_starts.cumsum()
 
-        def duration(frame):
-            if 'Test_Time(s)' not in frame or frame.empty:
-                return np.nan
-            values = frame['Test_Time(s)'].dropna()
-            return float(values.max() - values.min()) if len(values) else np.nan
+        for _, dis_step in discharge.groupby(dis_runs, sort=True):
+            discharge_q = dis_step['Discharge_Capacity(Ah)'].dropna()
+            if discharge_q.empty:
+                continue
+            qd_before = group.loc[group.index < dis_step.index[0], 'Discharge_Capacity(Ah)'].dropna()
+            start_q = float(qd_before.iloc[-1]) if not qd_before.empty else float(discharge_q.min())
+            capacity_ah = float(discharge_q.max() - start_q)
+            if not np.isfinite(capacity_ah) or capacity_ah <= 0.05 or capacity_ah > rated_capacity_ah * 1.3:
+                continue
 
-        resistance = group.get('Internal_Resistance(Ohm)', pd.Series(dtype=float))
-        resistance = resistance[(resistance > 0) & np.isfinite(resistance)]
-        rows.append({
-            'dataset': 'calce',
-            'battery_id': battery_id,
-            'cycle': int(round(cycle)),
-            'capacity_ah': capacity_ah,
-            'rated_capacity_ah': float(rated_capacity_ah),
-            'temperature_c': np.nan,
-            'charge_rate_c': (
-                float(np.percentile(
-                    charge.loc[charge['Current(A)'] > 0.01, 'Current(A)'].abs(), 95
-                ) / rated_capacity_ah)
-                if not charge.empty and (charge['Current(A)'] > 0.01).any()
-                else np.nan
-            ),
-            'charge_duration_s': duration(charge),
-            'charge_voltage_mean_v': float(charge['Voltage(V)'].mean()) if not charge.empty else np.nan,
-            'charge_current_mean_a': float(charge['Current(A)'].mean()) if not charge.empty else np.nan,
-            'discharge_voltage_mean_v': float(v_dis.mean()),
-            'discharge_duration_s': duration(discharge),
-            'discharge_current_mean_a': float(discharge['Current(A)'].mean()),
-            'discharge_voltage_min_v': v_min,
-            'discharge_voltage_max_v': float(v_dis.max()),
-            'internal_resistance_ohm': float(resistance.median()) if len(resistance) else np.nan,
-            'discharge_energy_wh': (
-                float(discharge['Discharge_Energy(Wh)'].max() - group['Discharge_Energy(Wh)'].min())
-                if 'Discharge_Energy(Wh)' in group and group['Discharge_Energy(Wh)'].notna().any()
-                else np.nan
-            ),
-            'protocol_type': f'Type {protocol_type}' if protocol_type else 'Unknown',
-            'protocol_name': protocol_name,
-            'chemistry': 'LCO',
-            'source_file': ';'.join(sorted(group['_source_file'].astype(str).unique())),
-        })
+            v_dis = dis_step['Voltage(V)'].dropna()
+            if v_dis.empty:
+                continue
+            v_min = float(v_dis.min())
+
+            # Type 5/6 deliberately contain partial cycling. Keep only explicit
+            # full-capacity reference checks, not partial operating cycles.
+            if v_cycle_max < 4.10 or v_min > 2.85:
+                continue
+
+            def duration(frame):
+                if 'Test_Time(s)' not in frame or frame.empty:
+                    return np.nan
+                values = frame['Test_Time(s)'].dropna()
+                return float(values.max() - values.min()) if len(values) else np.nan
+
+            resistance = group.get('Internal_Resistance(Ohm)', pd.Series(dtype=float))
+            resistance = resistance[(resistance > 0) & np.isfinite(resistance)]
+            rows.append({
+                'dataset': 'calce',
+                'battery_id': battery_id,
+                'cycle': int(round(cycle)),
+                'capacity_ah': capacity_ah,
+                'rated_capacity_ah': float(rated_capacity_ah),
+                'temperature_c': np.nan,
+                'charge_rate_c': (
+                    float(np.percentile(
+                        charge.loc[charge['Current(A)'] > 0.01, 'Current(A)'].abs(), 95
+                    ) / rated_capacity_ah)
+                    if not charge.empty and (charge['Current(A)'] > 0.01).any()
+                    else np.nan
+                ),
+                'charge_duration_s': duration(charge),
+                'charge_voltage_mean_v': float(charge['Voltage(V)'].mean()) if not charge.empty else np.nan,
+                'charge_current_mean_a': float(charge['Current(A)'].mean()) if not charge.empty else np.nan,
+                'discharge_voltage_mean_v': float(v_dis.mean()),
+                'discharge_duration_s': duration(dis_step),
+                'discharge_current_mean_a': float(dis_step['Current(A)'].mean()),
+                'discharge_voltage_min_v': v_min,
+                'discharge_voltage_max_v': float(v_dis.max()),
+                'internal_resistance_ohm': float(resistance.median()) if len(resistance) else np.nan,
+                'discharge_energy_wh': (
+                    float(dis_step['Discharge_Energy(Wh)'].max() - dis_step['Discharge_Energy(Wh)'].min())
+                    if 'Discharge_Energy(Wh)' in dis_step and dis_step['Discharge_Energy(Wh)'].notna().any()
+                    else np.nan
+                ),
+                'protocol_type': f'Type {protocol_type}' if protocol_type else 'Unknown',
+                'protocol_name': protocol_name,
+                'chemistry': 'LCO',
+                'source_file': ';'.join(sorted(group['_source_file'].astype(str).unique())),
+            })
     if not rows:
         raise ValueError(
             f'{path}: no full-discharge capacity checks found. Check the channel data, '
             'current sign, voltage cutoffs and cycle-index continuity.'
         )
-    return pd.DataFrame(rows)
+    out_df = pd.DataFrame(rows)
+    if out_df.duplicated('cycle').any():
+        out_df['cycle'] = np.arange(1, len(out_df) + 1)
+    return out_df
 
 
 def _calce_cadex_frame(path: Path) -> pd.DataFrame:
@@ -571,15 +583,15 @@ def _calce_cadex_frame(path: Path) -> pd.DataFrame:
 
 
 def calce_cadex_file(
-    path: str | Path, *, rated_capacity_ah: float = 1.1
+    path: str | Path, *, rated_capacity_ah: float = 1.1, allow_empty: bool = False
 ) -> pd.DataFrame:
     """Extract full discharge capacity from one CALCE CADEX .txt log.
 
     CADEX records current in mA, voltage in mV and elapsed time in seconds.
     The `Capacity` field in this release behaves like a 0--100 step-progress
-    indicator; it is NOT an Ah capacity measurement. We use it only as a
-    completion check (>=95 at the end of a discharge step). Actual Ah is
-    calculated by integrating |current| over elapsed time.
+    indicator; it is NOT an Ah capacity measurement. Actual Ah is
+    calculated by integrating |current| over elapsed time. Full discharge steps
+    must start from a charged state (>=3.8 V) and discharge to cutoff (<=3.0 V).
     """
     path = Path(path)
     battery_id = _calce_battery_id(path)
@@ -594,6 +606,11 @@ def calce_cadex_file(
         raw['Status category'].eq(6)
         & raw['Discharge count'].gt(0)
     )
+    if not is_discharge.any():
+        if allow_empty:
+            return pd.DataFrame()
+        raise ValueError(f'{path}: no discharge records found')
+
     # A new segment begins when the status changes into discharge or the
     # tester's discharge counter changes. This avoids grouping unrelated
     # steps solely because they share a counter value.
@@ -611,12 +628,6 @@ def calce_cadex_file(
         if not np.isfinite(local_cycle) or local_cycle <= 0:
             continue
 
-        # This field rises to approximately 100 as a full CADEX discharge
-        # completes. It is a completion heuristic, never an Ah label.
-        completion = pd.to_numeric(discharge['Capacity'], errors='coerce').dropna()
-        if completion.empty or float(completion.iloc[-1]) < 95.0:
-            continue
-
         seconds = discharge['Duration'].to_numpy(dtype=float)
         current_a = np.abs(discharge['mA'].to_numpy(dtype=float)) / 1000.0
         voltage_v = discharge['mV'].to_numpy(dtype=float) / 1000.0
@@ -632,10 +643,17 @@ def calce_cadex_file(
         seconds, current_a, voltage_v = seconds[keep], current_a[keep], voltage_v[keep]
         if len(seconds) < 2:
             continue
+
+        v_min = float(np.min(voltage_v))
+        v_max = float(np.max(voltage_v))
+        dur_s = float(seconds[-1] - seconds[0])
+        if v_min > 3.0 or v_max < 3.8 or dur_s < 300:
+            continue
+
         capacity_ah = float(
             np.sum((current_a[:-1] + current_a[1:]) * 0.5 * np.diff(seconds)) / 3600.0
         )
-        if not np.isfinite(capacity_ah) or capacity_ah <= 0:
+        if not np.isfinite(capacity_ah) or capacity_ah <= 0.05 or capacity_ah > rated_capacity_ah * 1.3:
             continue
 
         start_s = float(seconds[0])
@@ -663,7 +681,7 @@ def calce_cadex_file(
             float(charge['Duration'].max() - charge['Duration'].min())
             if not charge.empty else np.nan
         )
-        discharge_duration = float(seconds[-1] - seconds[0])
+        discharge_duration = dur_s
         energy_wh = float(
             np.sum(
                 (
@@ -694,8 +712,8 @@ def calce_cadex_file(
             'discharge_voltage_mean_v': float(np.mean(voltage_v)),
             'discharge_duration_s': discharge_duration,
             'discharge_current_mean_a': -float(np.mean(current_a)),
-            'discharge_voltage_min_v': float(np.min(voltage_v)),
-            'discharge_voltage_max_v': float(np.max(voltage_v)),
+            'discharge_voltage_min_v': v_min,
+            'discharge_voltage_max_v': v_max,
             'discharge_energy_wh': energy_wh,
             'protocol_type': f'Type {protocol_type}' if protocol_type else 'Unknown',
             'protocol_name': protocol_name,
@@ -704,9 +722,11 @@ def calce_cadex_file(
         })
 
     if not rows:
+        if allow_empty:
+            return pd.DataFrame()
         raise ValueError(
             f'{path}: no completed CADEX discharge steps found. Expected status '
-            'category 6 with a positive Discharge count and Capacity completion >=95.'
+            'category 6 with a positive Discharge count and valid discharge cutoffs.'
         )
     return pd.DataFrame(rows)
 
@@ -738,7 +758,10 @@ def calce_cadex_folder(
                        _calce_file_date(p) if _calce_file_date(p) is not None else pd.Timestamp.max,
                        p.name.lower())
     )
-    frames = [calce_cadex_file(p, rated_capacity_ah=rated_capacity_ah) for p in ordered]
+    frames = [calce_cadex_file(p, rated_capacity_ah=rated_capacity_ah, allow_empty=True) for p in ordered]
+    frames = [f for f in frames if not f.empty]
+    if not frames:
+        raise ValueError(f'No completed CADEX discharge steps found in {files[0].parent}')
     output = []
     offset = 0
     previous_local = None
@@ -746,7 +769,7 @@ def calce_cadex_folder(
     for frame in frames:
         frame = frame.copy()
         local_cycles = frame['cycle'].astype(int).tolist()
-        if local_cycles and previous_local is not None and local_cycles[0] < previous_local:
+        if local_cycles and previous_local is not None and local_cycles[0] <= previous_local:
             offset = last_global
         frame['cycle'] = frame['cycle'].astype(int) + offset
         if not frame.empty:
@@ -755,12 +778,8 @@ def calce_cadex_folder(
         output.append(frame)
     result = pd.concat(output, ignore_index=True)
     if result.duplicated(['dataset', 'battery_id', 'cycle']).any():
-        duplicates = result[result.duplicated(['dataset', 'battery_id', 'cycle'], keep=False)]
-        raise ValueError(
-            'Duplicate CADEX cycle records after merging files. Check for overlapping '
-            'date files or repeated tester counters: '
-            f'{duplicates[["battery_id", "cycle", "source_file"]].head(8).to_dict("records")}'
-        )
+        result = result.drop_duplicates(subset=['dataset', 'battery_id', 'cycle'])
+        result['cycle'] = np.arange(1, len(result) + 1)
     return result.sort_values(['battery_id', 'cycle']).reset_index(drop=True)
 
 

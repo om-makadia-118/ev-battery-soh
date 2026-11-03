@@ -1,0 +1,6 @@
+dataset,batteries,observations,min_cycle,max_cycle,soh_min,soh_max,ever_eol_batteries,coverage_temperature_c,coverage_charge_rate_c,coverage_charge_duration_s,coverage_charge_voltage_mean_v,coverage_charge_current_mean_a,coverage_discharge_voltage_mean_v,coverage_discharge_duration_s,coverage_discharge_current_mean_a,coverage_discharge_voltage_min_v,coverage_discharge_voltage_max_v,coverage_internal_resistance_ohm,coverage_discharge_energy_wh
+calce,15,9608,1,1308,4.67,110.19,15,0.193,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,0.783,1.0
+matr,140,114688,1,2237,75.0,99.98,43,1.0,0.0,1.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0
+nasa,4,636,1,168,57.69,101.77,4,1.0,0.0,0.995,0.995,0.995,1.0,0.0,0.0,0.0,0.0,0.0,0.0
+oxford,8,519,0,8200,61.64,99.88,8,1.0,0.0,1.0,1.0,0.0,1.0,0.0,0.0,0.0,0.0,0.0,0.0
+xjtu,23,6938,1,419,79.05,101.45,4,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0

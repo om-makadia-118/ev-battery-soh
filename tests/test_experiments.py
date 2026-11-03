@@ -35,6 +35,7 @@ def test_coral_one_feature():
 
 
 def test_deep_cpu(data):
+    pytest.importorskip('torch')
     from battery_soh.models.deep import TorchRegressor
     from battery_soh.experiments.engine import model_arrays
     src=data[data.dataset=='toy_a']

@@ -5,6 +5,8 @@ Usage:
   python scripts/run_classical_cpu.py --seeds 11 22 33 44 55
 """
 from __future__ import annotations
+import os
+os.environ.setdefault('MPLCONFIGDIR', '/tmp/matplotlib')
 import argparse
 from pathlib import Path
 import pandas as pd
@@ -24,7 +26,7 @@ def main():
     path = Path(args.input)
     if not path.exists():
         raise SystemExit(f'Missing {path}. First run: python -m battery_soh prepare --raw data/raw')
-    df = pd.read_csv(path)
+    df = pd.read_csv(path, low_memory=False)
     df = harmonize(df)
     datasets = sorted(df.dataset.unique())
     if len(datasets) < 2:
