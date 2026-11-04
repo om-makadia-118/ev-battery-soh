@@ -1,440 +1,369 @@
-# Comprehensive Research Paper Reference Manual
-## Cross-Dataset Generalization of Machine-Learning Models for EV Battery State-of-Health Prediction
+# Cross-Dataset Generalization and Few-Shot Adaptation of Machine-Learning Models for Electric Vehicle Battery State-of-Health Estimation
 
-**Document Type:** Definitive Academic & Empirical Research Reference  
-**Project:** Cross-Dataset Generalization of Machine-Learning Models for EV Battery State-of-Health Prediction  
-**Institutional Context:** BMSCE Project Work 2  
-**Framework Version:** v4 Certified Canonical Pipeline  
-**Dataset Scale:** 5 Public Laboratories | 190 Physical Cells | 132,389 Observed Cycles | 6,440 Benchmark Runs  
-**Random Seeds:** 5 Independent Seeds (`11, 22, 33, 44, 55`)  
-**Target Publication Venues:** IEEE Transactions on Transportation Electrification, Journal of Energy Storage, Applied Energy, IEEE Access  
+**Divyam Jain**  
+*Department of Computer Science and Engineering*  
+*B.M.S. College of Engineering (BMSCE), Autonomous Institute Affiliated to VTU*  
+*Bangalore, Karnataka, India*  
 
 ---
-
-# Table of Contents
-1. [Paper Metadata, Abstract & Keywords](#1-paper-metadata-abstract--keywords)
-2. [Introduction & Background](#2-introduction--background)
-3. [Data Sources & Electrochemical Provenance](#3-data-sources--electrochemical-provenance)
-4. [Data Engineering & Parser Remediation](#4-data-engineering--parser-remediation)
-5. [Task Definition, Harmonization & Leakage Safeguards](#5-task-definition-harmonization--leakage-safeguards)
-6. [Machine Learning Architectures & Alignment Formulations](#6-machine-learning-architectures--alignment-formulations)
-7. [Experimental Protocol & Benchmark Design](#7-experimental-protocol--benchmark-design)
-8. [Comprehensive Quantitative Results](#8-comprehensive-quantitative-results)
-9. [Electrochemical & Domain Shift Diagnostic Analysis](#9-electrochemical--domain-shift-diagnostic-analysis)
-10. [Discussion, Limitations & Practical BMS Implications](#10-discussion-limitations--practical-bms-implications)
-11. [Conclusion](#11-conclusion)
-12. [Paper Outline & Writing Blueprint](#12-paper-outline--writing-blueprint)
-13. [Bibliographic Citations & Benchmark Provenance](#13-bibliographic-citations--benchmark-provenance)
-
----
-
-# 1. Paper Metadata, Abstract & Keywords
-
-### Suggested Title
-*Cross-Dataset Generalization and Few-Shot Adaptation of Machine-Learning Models for Electric Vehicle Battery State-of-Health Estimation*
-
-### Alternative Titles
-- *Evaluating Domain Shift Across Battery Chemistries and Cycling Protocols: A Multi-Dataset Empirical Benchmark for EV SOH Prediction*
-- *When Laboratory Accuracy Fails on the Road: A Cross-Dataset Generalization Benchmark and Adaptation Study for Battery Health Estimation*
 
 ### Abstract
-State-of-Health (SOH) estimation is critical for safe and optimal battery management in electric vehicles (EVs). While recent data-driven models report within-dataset Mean Absolute Errors (MAE) well below 1.5% SOH, these evaluations almost universally rely on homogeneous laboratory data. In real-world automotive deployments, models must generalize across differing cathode chemistries ($\text{LiCoO}_2$, $\text{LiNiCoMnO}_2$, $\text{LiFePO}_4$), varying thermal environments (24°C–45°C), and disparate charging protocols (0.5C to 6.0C). 
+State-of-Health (SOH) estimation is critical for safe, optimal, and reliable battery management in electric vehicles (EVs). While recent data-driven models report within-dataset Mean Absolute Errors (MAE) below 1.5% SOH, these evaluations almost universally rely on homogeneous laboratory data. In real-world vehicular fleets, battery management systems (BMS) must generalize across differing cathode chemistries ($\text{LiCoO}_2$, $\text{LiNiCoMnO}_2$, $\text{LiFePO}_4$), fluctuating ambient temperatures (24°C–45°C), dynamic driving schedules, and disparate charging protocols (0.5C to 6.0C). This paper presents a comprehensive, zero-leakage empirical benchmark investigating the cross-dataset generalization of machine-learning models across five landmark battery degradation repositories: NASA, CALCE, XJTU, Oxford, and MATR (Severson et al.), comprising 190 physical battery cells and 132,389 validated cycling observations. Evaluating four distinct model families across five independent random seeds (6,440 total benchmark and adaptation runs), we establish three primary empirical contributions: (1) within-domain accuracy fails to predict cross-domain transferability—Gradient Boosted Decision Trees (XGBoost) achieve $3.89 \pm 3.19$ percentage points (pp) MAE on held-out cells within the same domain, but zero-shot cross-dataset transfer degrades error to $13.03 \pm 8.45$ pp for XGBoost and triggers catastrophic extrapolation failure for unconstrained linear models ($61.49 \pm 138.98$ pp average MAE, exceeding 600 pp on cycle-range mismatches); (2) Leave-One-Dataset-Out (LODO) multi-domain pooling serves as an effective regularizer, reducing linear model cross-domain MAE to $12.72 \pm 5.84$ pp and XGBoost to $10.82 \pm 5.44$ pp; and (3) few-shot target adaptation is exceptionally sample-efficient—incorporating just $k = 1$ target support battery reduces scratch adaptation MAE to $11.18$ pp across all models ($7.75$ pp for XGBoost), while $k = 3$ to $5$ support batteries restore performance to within-domain parity ($4.16$ pp for XGBoost).
 
-This work presents a comprehensive, zero-leakage empirical benchmark investigating the cross-dataset generalization of machine-learning models across five landmark battery degradation repositories: NASA, CALCE, XJTU, Oxford, and MATR (Severson et al.), comprising 190 physical battery cells and 132,389 validated cycle observations. Evaluating four distinct model families across five independent random seeds (6,440 total benchmark and adaptation runs), we establish three major empirical findings:
-1. **Within-domain accuracy fails to predict cross-domain transferability:** While Gradient Boosted Decision Trees (XGBoost) achieve an average within-domain holdout MAE of $3.89 \pm 3.19$ percentage points (pp) and Ridge regression achieves $4.51 \pm 3.72$ pp, zero-shot transfer degrades error to $13.03 \pm 8.45$ pp for XGBoost and triggers catastrophic extrapolation failure for linear models ($61.49 \pm 138.98$ pp average, exceeding 600 pp on extreme cycle-range shifts).
-2. **Leave-One-Dataset-Out (LODO) pooling acts as a powerful regularizer:** Training across diverse source domains prevents single-source extrapolation blowups, reducing linear model cross-domain MAE from $61.49$ pp to $12.72 \pm 5.84$ pp, and XGBoost to $10.82 \pm 5.44$ pp.
-3. **Few-shot target adaptation is highly sample-efficient:** Providing just $k = 1$ target support battery reduces scratch adaptation MAE to $11.18$ pp across all models ($7.75$ pp for XGBoost), while $k = 3$ to $5$ target batteries suffice to restore accuracy to within-domain baseline parity ($4.16$ pp for XGBoost). Furthermore, feature-level correlation alignment (CORAL) and normalization successfully stabilize transfer without retraining internal parameters.
-
-### Keywords
-Lithium-ion batteries; State of Health (SOH); Cross-dataset generalization; Domain adaptation; Transfer learning; Battery Management Systems (BMS); Machine learning; Few-shot learning; Empirical benchmarking.
+*Index Terms*—Battery management systems, cross-dataset generalization, domain adaptation, few-shot learning, lithium-ion batteries, machine learning, state of health (SOH), transfer learning.
 
 ---
 
-# 2. Introduction & Background
+## I. INTRODUCTION
 
-### 2.1 The Degradation Problem in Electric Vehicles
-Lithium-ion batteries undergo complex, irreversible electrochemical and mechanical degradation over their operational lifespan. Key aging mechanisms include:
-- **Solid Electrolyte Interphase (SEI) growth:** Continuous parasitic electrolyte decomposition at the negative graphite electrode consumes active cyclable lithium ions.
-- **Lithium plating:** Deposition of metallic lithium on the anode during high C-rate charging or low-temperature operation, inducing capacity loss and safety risks.
-- **Loss of active material (LAM):** Particle cracking, transition metal dissolution, and phase transitions in the cathode (e.g., LCO, NCM, LFP).
-- **Internal impedance growth:** Increases resistive heat dissipation and diminishes power delivery capability.
+LITHIUM-ION batteries represent the dominant energy storage technology for electric vehicles (EVs) and smart grids due to their high specific energy, high power capability, and falling unit costs. However, during real-world vehicular operation, battery cells undergo progressive, irreversible degradation driven by parasitic chemical side-reactions, including Solid Electrolyte Interphase (SEI) layer growth at the negative electrode, loss of cyclable lithium inventory, active material dissolution, and lithium plating during high-rate charging [1], [2]. Because internal chemical states cannot be monitored directly via non-invasive on-board sensors, the Battery Management System (BMS) relies on algorithmic estimators to infer State-of-Health (SOH).
 
-Because internal chemical degradation cannot be directly measured via physical sensors in operating vehicles, Battery Management Systems (BMS) rely on mathematical and machine-learning models to infer State-of-Health (SOH) from non-invasive terminal measurements (voltage, current, temperature, and cycle age).
+Accurate SOH estimation is critical for determining vehicle driving range, preventing thermal runaway, tailoring charging speed, and appraising battery residual value for second-life grid applications [3]. Driven by the availability of public cycling datasets, data-driven machine learning (ML) and deep learning (DL) models have gained immense popularity, frequently reporting within-dataset estimation errors under $1.5\%$ SOH [4], [5].
 
-### 2.2 The Methodological Gap in Existing Literature
-Existing battery SOH estimation literature suffers from three prevalent methodological flaws:
-1. **Random Row Splitting / Temporal Contamination:** Many studies randomly shuffle cycle rows from the same battery into training and testing sets. Because consecutive cycles of a degrading battery exhibit high temporal autocorrelation, random splitting leaks historical trajectory data, yielding artificially low test errors ($< 0.5\%$) that fail to replicate in practice.
-2. **Homogeneous Domain Overfitting:** Models are typically trained and tested on cells from the same laboratory, tested under identical ambient conditions, using the same battery batch and test equipment. Such evaluations fail to assess whether the learned representations generalize to other chemistries, temperatures, or duty cycles.
-3. **Target Feature Leakage:** Several published pipelines use features derived from the current cycle's discharge capacity or end-of-discharge parameters to estimate that same cycle's SOH, effectively leaking the target variable into the input matrix.
+Despite these encouraging laboratory numbers, conventional evaluation methodologies suffer from three fundamental flaws:
+1. *Random Row Partitioning and Temporal Contamination:* Researchers frequently shuffle cycle rows from the same battery cell across training and test splits. Because adjacent cycles of a degrading cell exhibit strong temporal autocorrelation, random cycle splitting leaks future degradation trajectory data, producing artificially optimistic test errors that fail to replicate in production [6].
+2. *Homogeneous Laboratory Overfitting:* Models are almost universally trained and tested on cells from a single manufacturing batch, cycled at a fixed laboratory temperature, under identical test protocols. In automotive fleets, batteries encounter dramatic domain shifts in chemistry, ambient climate, dynamic drive schedules, and charging C-rates.
+3. *Target Feature Leakage:* Several published pipelines utilize features derived from current-cycle discharge capacity or end-of-discharge voltage curves to estimate current-cycle health, leaking the prediction target into the input feature matrix.
 
-### 2.3 Research Questions (RQs) Formulated
-This benchmark was designed to answer three fundamental questions:
-- **RQ1: Does within-dataset performance reliably predict cross-dataset generalization?**
-- **RQ2: How severely does performance degrade across disparate battery chemistries (LCO vs. NCM vs. LFP) and cycling regimes?**
-- **RQ3: How many target-domain battery cells are required to achieve effective few-shot domain adaptation?**
+To address these critical limitations, this work establishes an exhaustive, zero-leakage empirical benchmark evaluating the cross-dataset generalization of machine-learning models across five major public battery repositories: NASA Ames PCoE [2], University of Maryland CALCE [3], Xi'an Jiaotong University (XJTU) [5], Oxford University [4], and MIT-Stanford-Toyota (MATR / Severson et al.) [1], totaling 190 physical battery cells and 132,389 observed cycles.
+
+The primary contributions of this paper are:
+- **Zero-Leakage Benchmark Pipeline:** We formulate and implement strict battery-disjoint partitioning ($\mathcal{B}_{\text{train}} \cap \mathcal{B}_{\text{test}} = \emptyset$) and enforce a zero-feature-leakage policy across all five heterogeneous repositories.
+- **Complete $5 \times 5$ Cross-Dataset Transfer Matrix:** We evaluate pairwise zero-shot transfer across 20 distinct source-target domain pairs and 5 within-domain diagonals across four model architectures and five random seeds (500 runs).
+- **Multi-Domain Pooling via LODO:** We quantify the regularizing capability of Leave-One-Dataset-Out (LODO) training across four pooled domains evaluated on a completely unseen fifth domain (100 runs).
+- **Sample-Efficient Few-Shot Domain Adaptation:** We investigate the sample efficiency of target pack adaptation across support sizes $k \in \{0, 1, 3, 5, 10\}$ using scratch training, pooled learning, MeanVariance normalization, and Correlation Alignment (CORAL) (5,840 runs), providing explicit accounting of physical cell pool limits.
+- **Diagnostic Electrochemical Breakdown:** We analyze the mathematical and electrochemical drivers of domain shift, identifying why unconstrained linear estimators experience catastrophic extrapolation divergence on cycle-lifespan mismatches while tree-based ensembles remain bounded.
 
 ---
 
-# 3. Data Sources & Electrochemical Provenance
+## II. RELATED WORK AND PROBLEM FORMULATION
 
-The benchmark is conducted exclusively across five verified public laboratory datasets, covering 190 physical cells and 132,389 validated cycle observations.
+### A. State-of-Health Estimation Methodologies
+Conventional SOH estimation techniques in BMS include Coulomb counting (current integration), open-circuit voltage (OCV) relaxation mapping, and Equivalent Circuit Model (ECM) parameter tracking via Extended Kalman Filters (EKF) [7]. While Coulomb counting is computationally lightweight, it is susceptible to current sensor drift and requires periodic recalibration at full charge/discharge [8]. OCV relaxation requires extensive resting periods (often 1–2 hours) for electrochemical equilibrium, which is impractical in moving vehicles.
+
+Data-driven ML approaches model the mapping from operational cycle features $X_t$ to capacity-derived SOH directly. Commonly deployed techniques include Support Vector Regression (SVR), Gaussian Process Regression (GPR), Gradient Boosted Decision Trees (XGBoost), Long Short-Term Memory (LSTM) networks, and Transformers [4], [5], [9]. However, existing literature overwhelmingly reports within-dataset accuracy, leaving cross-dataset transferability largely uncharacterized.
+
+### B. Mathematical Definition of State-of-Health
+State-of-Health ($\text{SOH}_t$) at operational cycle $t$ is defined as the ratio of validated full discharge capacity $Q_t$ to manufacturer nominal rated capacity $Q_{\text{nominal}}$:
+$$\text{SOH}_t = \frac{Q_t}{Q_{\text{nominal}}} \times 100 \quad [\%] \tag{1}$$
+Where $Q_{\text{nominal}}$ is fixed by cell manufacturer specifications: $2.0\text{ Ah}$ for NASA and XJTU, $1.1\text{ Ah}$ for CALCE and MATR, and $0.74\text{ Ah}$ for Oxford.
+
+### C. End-of-Life (EOL) Standards
+In industrial standards, End-of-Life (EOL) is reached when available capacity degrades below a predefined threshold:
+- *Source-Specific EOL:* Preserved per original research protocols: NASA (70%), CALCE (70%), XJTU (80%), Oxford ($\approx 80\%$), MATR (80%).
+- *Harmonized Benchmark EOL:* Fixed at 80.0% SOH across all datasets to enable standardized multi-chemistry comparison. Post-EOL cycles are retained in the feature space to evaluate non-linear degradation knee behavior.
+
+---
+
+## III. MULTI-DATASET BENCHMARK REPOSITORIES AND PROVENANCE
+
+The benchmark investigates five authenticated open-access repositories covering 190 physical cells and 132,389 validated cycle observations, summarized in Table I.
 
 ```
 +--------------------------------------------------------------------------------------------------+
-|                                    190 VALIDATED PHYSICAL CELLS                                   |
-|                                    132,389 Observed SOH Cycles                                   |
-+-------------------+-------------------+-------------------+-------------------+------------------+
-|       NASA        |       CALCE       |       XJTU        |      Oxford       |       MATR       |
-|    (4 Cells)      |    (15 Cells)     |    (23 Cells)     |     (8 Cells)     |   (140 Cells)    |
-|   18650 / LCO     |  Prismatic / LCO  |    18650 / NCM    |    Pouch / LCO    |   18650 / LFP    |
-|     2.0 Ah        |      1.1 Ah       |      2.0 Ah       |      0.74 Ah      |      1.1 Ah      |
-|      24°C         |       25°C        |  25°C, 35°C, 45°C |       40°C        |       30°C       |
-|    1C Charge      |    0.5C Charge    |   2C, 3C Charge   |    0.5C Charge    |  3.6C-6C Charge  |
-+-------------------+-------------------+-------------------+-------------------+------------------+
+| TABLE I: SPECIFICATIONS OF BENCHMARK BATTERY DATASETS                                            |
++----------+-----------------+-------------+-------------+-------+----------+----------------------+
+| Dataset  | Positive / Neg. | Form Factor | Nominal Cap | Temp. | Cells    | Charge / Discharge   |
+| Name     | Electrode       |             | (Ah)        | (°C)  | Count    | Protocol             |
++----------+-----------------+-------------+-------------+-------+----------+----------------------+
+| NASA     | LCO / Graphite  | 18650 Cyl.  | 2.0         | 24    | 4 cells  | 1.0C CC-CV / 1.0C CC |
+| CALCE    | LCO / Graphite  | CS2 Prism.  | 1.1         | 25    | 15 cells | 0.5C / 0.1C–2.0C dyn |
+| XJTU     | NCM / Graphite  | 18650 Cyl.  | 2.0         | 25-45 | 23 cells | 2C, 3C / 1.0C CC     |
+| Oxford   | LCO / Graphite  | Pouch SLPB  | 0.74        | 40    | 8 cells  | 0.5C / Artemis dyn   |
+| MATR     | LFP / Graphite  | 18650 Cyl.  | 1.1         | 30    | 140 cell | 3.6C-6C / 4.0C CC    |
++----------+-----------------+-------------+-------------+-------+----------+----------------------+
 ```
 
-### 3.1 Detailed Source Breakdown
+### A. NASA Ames PCoE Repository
+The NASA PCoE battery dataset [2] consists of commercial 18650-size lithium cobalt oxide ($\text{LiCoO}_2$, LCO) cells cycled at room temperature (24°C). The four fully validated cells (`B0005`, `B0006`, `B0007`, `B0018`) underwent 1.0C CC-CV charging to 4.2V and 1.0C (2.0A) CC discharging to 2.7V. Cycling continues until reaching approximately 70% SOH over 132 to 168 cycles.
 
-| Dataset Name | Originating Institution | Cell Form Factor | Positive Electrode (Cathode) | Negative Electrode (Anode) | Rated Capacity ($Q_0$) | Ambient Temp (°C) | Charge Regime | Discharge Regime | Cell Identifiers | Cycle Count Range |
-| :--- | :--- | :--- | :--- | :--- | :---: | :---: | :--- | :--- | :--- | :---: |
-| **NASA** | NASA Ames Prognostics Center of Excellence (PCoE) | 18650 Cylindrical | $\text{LiCoO}_2$ (LCO) | Graphite | 2.0 Ah | 24°C | 1.0C CC-CV (4.2V cutoff, 20mA taper) | 1.0C CC (2.0A) to 2.7V cutoff | `B0005`, `B0006`, `B0007`, `B0018` | 132 – 168 |
-| **CALCE** | University of Maryland (CALCE Center) | CS2 Prismatic | $\text{LiCoO}_2$ (LCO) | Graphite | 1.1 Ah | 25°C | 0.5C CC-CV to 4.2V | Constant & dynamic discharges (0.1C to 2.0C) to 2.7V | `CS2_3` through `CS2_38` (15 cells) | 450 – 1,100 |
-| **XJTU** | Xi'an Jiaotong University | 18650 Cylindrical | $\text{LiNiCoMnO}_2$ (NCM) | Graphite | 2.0 Ah | 25°C, 35°C, 45°C | Fast charge: 2.0C (Batch 1) & 3.0C (Batch 2) | 1.0C CC to 2.5V cutoff | 8 Batch 1 cells + 15 Batch 2 cells | 240 – 720 |
-| **Oxford** | Oxford University (Howey et al.) | Kokam SLPB Pouch | $\text{LiCoO}_2$ (LCO) | Graphite | 0.74 Ah | 40°C | 0.5C CC-CV to 4.2V | Artemis urban drive cycles; 1C characterization checks | `Cell1` through `Cell8` (8 cells) | 50 – 520 (sparse) |
-| **MATR** | Stanford, MIT, Toyota Research Inst. (Severson et al.) | A123 APR18650M1A Cylindrical | $\text{LiFePO}_4$ (LFP) | Graphite | 1.1 Ah | 30°C | Fast multi-stage charging (3.6C to 6.0C) | 4.0C CC to 2.0V cutoff | 140 unique cell summaries across 3 batches | 150 – 2,300 |
+### B. CALCE CS2 Repository
+The University of Maryland Center for Advanced Life Cycle Engineering (CALCE) CS2 dataset [3] comprises prismatic LCO cells rated at 1.1 Ah, cycled at 25°C under varying constant and dynamic discharge rates (0.1C to 2.0C) down to 2.7V. Fifteen physical cells (`CS2_3` through `CS2_38`) were ingested from 13 Arbin Excel workbooks and 2 CADEX text archives.
 
----
+### C. XJTU BatteryLife Repository
+The Xi'an Jiaotong University dataset [5] evaluates commercial 18650 cylindrical cells with nickel-cobalt-manganese ($\text{LiNiCoMnO}_2$, NCM) chemistry rated at 2.0 Ah. Cycling was conducted across ambient temperatures of 25°C, 35°C, and 45°C under aggressive fast-charging conditions (2.0C in Batch 1; 3.0C in Batch 2) with 1.0C discharge to 2.5V, covering 23 physical cells and 6,938 cycle observations.
 
-# 4. Data Engineering & Parser Remediation
+### D. Oxford Battery Degradation Dataset
+The Oxford repository [4] evaluates 8 commercial Kokam SLPB 740 mAh lithium cobalt oxide pouch cells cycled at an elevated ambient temperature of 40°C. Cells undergo dynamic Artemis urban driving schedules, with standardized 1C capacity characterization checks conducted every $\sim 100$ drive cycles over 519 discrete checkpoint cycles.
 
-Raw battery repositories are notoriously heterogeneous, uncurated, and riddled with proprietary instrument artifacts. Phase 1 resolved four major parser defects:
-
-### 4.1 CALCE CADEX Current-Time Integration (`CS2_8`, `CS2_21`)
-- **The Defect:** In CALCE CADEX text exports, the column titled `Capacity` records a test-step progress percentage ($0\% - 100\%$) rather than discharge ampere-hours. Degrading cells reach the discharge voltage cutoff ($2.7\text{V}$) prior to reaching $100\%$ completion. Applying a naive completion threshold ($>95\%$) caused degraded aged cycles to be discarded. Furthermore, some maintenance log files contained zero discharge steps (charge-only).
-- **The Mathematical Remedy:** Discharge capacity was extracted via trapezoidal numerical integration of recorded discharge current over time:
-  $$Q_{\text{dis}} = \int_{t_{\text{start}}}^{t_{\text{end}}} |I(t)| \, dt = \sum_{k=1}^{N-1} \frac{|I_k| + |I_{k+1}|}{2} \Delta t_k$$
-  Physical validity cutoffs were enforced: $V_{\min} \le 3.0\text{V}$, $V_{\max} \ge 3.8\text{V}$, duration $\ge 300\text{s}$, and $Q_{\text{dis}} \ge 0.05\text{ Ah}$. Empty maintenance files are safely skipped without halting directory parsing.
-
-### 4.2 CALCE Arbin Multi-Step Counter Accumulation (`CS2_3`, `CS2_9`)
-- **The Defect:** In alternating-rate discharge tests, Arbin equipment recorded up to six discharge steps (ranging from 0.1C to 2.0C) within a single assigned `Cycle_Index`. Calculating capacity by taking `max(qd) - min(qd)` over the cycle summed all six distinct discharges, resulting in unphysical capacities of 5.6 to 6.7 Ah on a 1.1 Ah cell.
-- **The Mathematical Remedy:** Discharges were segmented by contiguous discharge step (`_dis_step`), calculating capacity relative to the step's preceding baseline:
-  $$Q_{\text{step}} = Q_{\text{dis, final}} - Q_{\text{dis, initial}}$$
-  This eliminated cumulative step inflation and capped all extracted capacities at physical limits ($\le 1.16\text{ Ah}$).
-
-### 4.3 MATR Hardware Glitch Outlier Filtering
-- **The Defect:** In the Severson et al. dataset (114,692 cycle summaries), exactly four single-cycle records contained extreme instrumentation hardware glitches (e.g., recorded discharge capacity of 2.88 Ah and 1.54 Ah on a 1.1 Ah rated cell).
-- **The Mathematical Remedy:** Enforced strict physical bounds: $c \le 1.43\text{ Ah}$ (corresponding to $\text{SOH} \le 130\%$). This sanitized the series completely without artificial smoothing or interpolation.
-
-### 4.4 Oxford Sparse Checkpoint Preservation
-- **The Defect:** Oxford Kokam pouch cells undergo dynamic Artemis urban drive cycles, with full capacity characterization cycles recorded only every $\sim 100$ drive cycles. Standard time-series pipelines erroneously interpolate intermediate unobserved SOH values.
-- **The Methodological Remedy:** All discrete characterization checkpoints were preserved exactly as measured. Zero synthetic labels were fabricated.
+### E. MATR (Severson et al.) Dataset
+The MIT-Stanford-Toyota collection [1] is the largest public battery degradation repository, evaluating commercial A123 Systems APR18650M1A lithium iron phosphate ($\text{LiFePO}_4$, LFP) cells rated at 1.1 Ah. The 140 cells across three batches were tested at 30°C under multi-step fast-charging regimes (ranging from 3.6C to 6.0C) with 4.0C discharge to 2.0V, encompassing 114,688 validated cycles.
 
 ---
 
-# 5. Task Definition, Harmonization & Leakage Safeguards
+## IV. DATA PREPROCESSING AND ZERO-LEAKAGE HARMONIZATION
 
-### 5.1 State-of-Health (SOH) Definition
-SOH is defined as the percentage of remaining discharge capacity relative to manufacturer nominal rated capacity:
-$$\text{SOH}_t = \frac{Q_t}{Q_{\text{nominal}}} \times 100$$
-Where:
-- $Q_t$: Measured full discharge capacity in ampere-hours for observation $t$.
-- $Q_{\text{nominal}}$: 2.0 Ah (NASA, XJTU), 1.1 Ah (CALCE, MATR), 0.74 Ah (Oxford).
+### A. Raw Archive Parser Remediation
+To guarantee data fidelity, Phase 1 corrected four critical parser defects identified in the raw archives:
+1. *CALCE CADEX Numerical Integration:* In `CS2_8` and `CS2_21`, the recorded `Capacity` field represents progress percentage ($0\% - 100\%$) rather than ampere-hours. Degrading cells hit the 2.7V cutoff prior to reaching 100% completion. True capacity was reconstructed via trapezoidal numerical integration of discharge current over step duration:
+   $$Q_{\text{dis}} = \int_{t_{\text{start}}}^{t_{\text{end}}} |I(t)| \, dt = \sum_{k=1}^{N-1} \frac{|I_k| + |I_{k+1}|}{2} \Delta t_k \tag{2}$$
+   Physical cutoff filters ($V_{\min} \le 3.0\text{V}$, $V_{\max} \ge 3.8\text{V}$, duration $\ge 300\text{s}$, $Q_{\text{dis}} \ge 0.05\text{ Ah}$) were enforced.
+2. *CALCE Arbin Step Segmentation:* In multi-rate test profiles (`CS2_3`, `CS2_9`), Arbin equipment bundled up to six discharge steps into a single cycle index. Re-segmenting by `_dis_step` with starting baseline subtraction prevented cumulative counter accumulation, capping capacities at physical boundaries ($\le 1.16\text{ Ah}$).
+3. *MATR Hardware Glitch Outlier Filtering:* Exactly 4 single-cycle measurements out of 114,692 rows exhibited unphysical hardware spikes ($>1.43\text{ Ah}$). Enforcing physical bounds ($SOH \le 130\%$) sanitized the series without artificial smoothing.
+4. *Oxford Sparse Checkpoint Integrity:* Discrete characterization checkpoints (~100 cycles) were preserved without artificial interpolation.
 
-### 5.2 End-of-Life (EOL) Policy
-- **Source EOL:** Preserved per original repository specifications:
-  - NASA: 70% SOH (1.40 Ah)
-  - CALCE: 70% SOH (0.77 Ah)
-  - XJTU: 80% SOH (1.60 Ah)
-  - Oxford: $\approx 80\%$ SOH (0.59 Ah)
-  - MATR: 80% SOH (0.88 Ah)
-- **Harmonized Benchmark EOL:** Standardized at 80.0% SOH for cross-dataset comparison. Post-EOL observations are retained to evaluate non-linear degradation knee behavior.
+### B. Strict Battery-Disjoint Splitting
+To prevent temporal contamination, all data splits partition by unique battery identifier (`dataset::battery_id`):
+$$\mathcal{B}_{\text{train}} \cap \mathcal{B}_{\text{val}} = \emptyset, \quad \mathcal{B}_{\text{train}} \cap \mathcal{B}_{\text{test}} = \emptyset, \quad \mathcal{B}_{\text{val}} \cap \mathcal{B}_{\text{test}} = \emptyset \tag{3}$$
+All observations belonging to battery cell $i$ reside exclusively within one assigned partition.
 
-### 5.3 Leakage Prevention Protocols
-1. **Battery-Level Disjoint Splitting:**
-   $$\mathcal{B}_{\text{train}} \cap \mathcal{B}_{\text{val}} = \emptyset, \quad \mathcal{B}_{\text{train}} \cap \mathcal{B}_{\text{test}} = \emptyset, \quad \mathcal{B}_{\text{val}} \cap \mathcal{B}_{\text{test}} = \emptyset$$
-   All observations belonging to battery $i$ reside strictly within one partition.
-2. **Predictor Feature Constraints:**
-   The feature matrix $X_t$ consists strictly of operational cycle indices. Current-cycle measured capacity $Q_t$ and target $\text{SOH}_t$ are strictly excluded from $X_t$.
+### C. Zero-Leakage Feature Formulation
+The input feature matrix $X_t$ consists solely of the operational cycle index:
+$$X_t = [c_t] \tag{4}$$
+The current cycle's measured discharge capacity $Q_t$ and target $\text{SOH}_t$ are strictly forbidden from $X_t$.
 
 ---
 
-# 6. Machine Learning Architectures & Alignment Formulations
+## V. MODEL ARCHITECTURES AND DOMAIN ALIGNMENT
 
-### 6.1 Classical Model Architectures
-- **Naive Mean Baseline:**
-  $$\hat{y}_t = \frac{1}{N_{\text{train}}} \sum_{i=1}^{N_{\text{train}}} y_i$$
-  Establishes the minimal baseline; any valid ML model must comfortably outperform the training mean.
-- **Ridge Regression (L2 Regularization):**
-  $$\min_w \|y - Xw\|_2^2 + \alpha \|w\|_2^2, \quad \alpha = 1.0$$
-  Fits a linear degradation trajectory with closed-form solution: $w = (X^T X + \alpha I)^{-1} X^T y$.
-- **ElasticNet (L1 + L2 Regularization):**
-  $$\min_w \frac{1}{2N} \|y - Xw\|_2^2 + \alpha \left( \rho \|w\|_1 + \frac{1 - \rho}{2} \|w\|_2^2 \right), \quad \alpha = 0.1, \rho = 0.5$$
-- **XGBoost (Gradient Boosted Decision Trees):**
-  Ensemble of $K$ regression trees:
-  $$\hat{y}_t = \sum_{k=1}^K f_k(X_t), \quad \mathcal{L} = \sum_{i} l(y_i, \hat{y}_i) + \sum_k \left( \gamma T_k + \frac{1}{2} \lambda \|w_k\|^2 \right)$$
-  Hyperparameters: `n_estimators=100`, `max_depth=4`, `learning_rate=0.05`, `subsample=0.8`.
+### A. Evaluated Model Architectures
+1. *Naive Mean Baseline:*
+   $$\hat{y}_t = \bar{y}_{\text{train}} = \frac{1}{N_{\text{train}}} \sum_{i=1}^{N_{\text{train}}} y_i \tag{5}$$
+   Serves as the empirical minimum reference; any practical model must substantially outperform the training mean.
+2. *Ridge Regression (L2 Regularization):*
+   $$\min_w \|y - Xw\|_2^2 + \alpha \|w\|_2^2 \implies w = (X^T X + \alpha I)^{-1} X^T y \tag{6}$$
+   Where $\alpha = 1.0$. Fits a regularized linear degradation slope.
+3. *ElasticNet Regression (L1 + L2 Regularization):*
+   $$\min_w \frac{1}{2N} \|y - Xw\|_2^2 + \alpha \left( \rho \|w\|_1 + \frac{1 - \rho}{2} \|w\|_2^2 \right) \tag{7}$$
+   Where $\alpha = 0.1$ and $\rho = 0.5$ (equal balance between Lasso and Ridge penalties).
+4. *XGBoost (Gradient Boosted Decision Trees):*
+   Ensemble of $K$ additive regression trees:
+   $$\hat{y}_i = \sum_{k=1}^K f_k(X_i), \quad \mathcal{L} = \sum_{i=1}^N l(y_i, \hat{y}_i) + \sum_{k=1}^K \Omega(f_k) \tag{8}$$
+   Where $\Omega(f_k) = \gamma T_k + \frac{1}{2}\lambda \sum_{j=1}^{T_k} w_j^2$. Hyperparameters: `n_estimators=100`, `max_depth=4`, `learning_rate=0.05`, `subsample=0.8`.
 
-### 6.2 Domain Adaptation Formulations
-When adapting a source-trained model using $k$ target support batteries $\mathcal{D}_{t,\text{support}}$:
-1. **Scratch Training:** Train classical model exclusively on target support observations:
-   $$w^* = \arg\min_w \mathcal{L}(w; \mathcal{D}_{t,\text{support}})$$
-2. **Pooled Training:** Concatenate source training data with target support data:
-   $$w^* = \arg\min_w \mathcal{L}(w; \mathcal{D}_s \cup \mathcal{D}_{t,\text{support}})$$
-3. **MeanVariance Normalization Alignment:**
-   Align source features to target support mean and variance without modifying model parameters:
-   $$\hat{X}_s = \frac{X_s - \mu_s}{\sigma_s} \cdot \sigma_{t,\text{support}} + \mu_{t,\text{support}}$$
-4. **Correlation Alignment (CORAL):**
-   Whiten source covariance and recolor using support-only target covariance:
-   $$C_s = \text{Cov}(X_s) + \lambda I, \quad C_t = \text{Cov}(X_{t,\text{support}}) + \lambda I$$
-   $$A = C_s^{-1/2} C_t^{1/2}, \quad \hat{X}_s = (X_s - \mu_s) A + \mu_t$$
-   Where $C^{-1/2}$ is computed via eigendecomposition: $C = U \Lambda U^T \implies C^{-1/2} = U \Lambda^{-1/2} U^T$.
+### B. Few-Shot Domain Adaptation Formulations
+When adapting a source model using $k$ target support batteries $\mathcal{D}_{t,\text{support}}$:
+1. *Scratch Adaptation:* Model is trained exclusively on target support cells:
+   $$w^* = \arg\min_w \mathcal{L}(w; \mathcal{D}_{t,\text{support}}) \tag{9}$$
+2. *Pooled Adaptation:* Source training data is concatenated with target support data:
+   $$w^* = \arg\min_w \mathcal{L}(w; \mathcal{D}_s \cup \mathcal{D}_{t,\text{support}}) \tag{10}$$
+3. *MeanVariance Normalization Alignment:*
+   Aligns source features to target support mean and variance without modifying model weights:
+   $$\hat{X}_s = \frac{X_s - \mu_s}{\sigma_s} \cdot \sigma_{t,\text{support}} + \mu_{t,\text{support}} \tag{11}$$
+4. *Correlation Alignment (CORAL):*
+   Minimizes domain covariance distance by whitening the source feature covariance and recoloring with target support covariance:
+   $$C_s = \text{Cov}(X_s) + \lambda I, \quad C_t = \text{Cov}(X_{t,\text{support}}) + \lambda I \tag{12}$$
+   $$A = C_s^{-1/2} C_t^{1/2}, \quad \hat{X}_s = (X_s - \mu_s) A + \mu_{t,\text{support}} \tag{13}$$
+   Where $C^{-1/2} = U \Lambda^{-1/2} U^T$ is calculated via symmetric eigendecomposition.
 
 ---
 
-# 7. Experimental Protocol & Benchmark Design
+## VI. EXPERIMENTAL SETUP AND PROTOCOLS
 
 ```
 +--------------------------------------------------------------------------------------------------+
-|                                    FOUR BENCHMARK PROTOCOLS                                      |
+| FIG. 1: FOUR BENCHMARK EVALUATION PROTOCOLS                                                      |
 +--------------------------+--------------------------+--------------------------------------------+
-| 1. Within-Dataset        | 2. 5x5 Pairwise Transfer | 3. Leave-One-Dataset-Out (LODO)            |
+| Protocol 1: Within       | Protocol 2: 5x5 Matrix   | Protocol 3: LODO Generalization            |
 | - 60% Train / 20% Val    | - 20 Transfer Pairs      | - Train: 4 Pooled Domains                  |
 | - 20% Held-Out Test      | - 5 Within Diagonals     | - Test: 5th Held-Out Domain                |
 | - 5 Seeds (25 runs)      | - 5 Seeds (500 runs)     | - 5 Seeds (100 runs)                       |
 +--------------------------+--------------------------+--------------------------------------------+
-| 4. Few-Shot Domain Adaptation                                                                    |
-| - Target Support Batteries: k in {0, 1, 3, 5, 10}                                               |
-| - Strategies: None (Zero-Shot), Scratch, Pooled, Normalization, CORAL                            |
-| - 5 Seeds (5,840 runs) | Infeasible Settings Explicitly Logged (320 runs)                        |
+| Protocol 4: Few-Shot Adaptation (k in {0, 1, 3, 5, 10} support cells, 5,840 runs)               |
 +--------------------------------------------------------------------------------------------------+
 ```
 
-### 7.1 Five-Seed Protocol
-To guarantee statistical reproducibility, all evaluations were independently executed across five seeds:
+### A. Evaluation Protocol Definitions
+1. *Within-Dataset Benchmark:* Evaluated on held-out physical cells within the same repository (60% train, 20% validation, 20% test).
+2. *$5 \times 5$ Cross-Dataset Transfer Matrix:* Source-trained model evaluated zero-shot on each target repository ($20$ cross pairs $+ 5$ within diagonals $\times 4$ models $\times 5$ seeds $= 500$ runs).
+3. *Leave-One-Dataset-Out (LODO):* Model trained on four pooled datasets and evaluated on the held-out fifth dataset ($5$ target folds $\times 4$ models $\times 5$ seeds $= 100$ runs).
+4. *Few-Shot Domain Adaptation:* Target test cells are reserved. Support cells $k \in \{0, 1, 3, 5, 10\}$ are drawn from the remaining target pool across four adaptation strategies (5,840 total runs).
+
+### B. Statistical Replication Across Five Seeds
+All experiments were repeated across five independent random seeds:
 $$\text{Seeds} \in \{11, 22, 33, 44, 55\}$$
-Results are reported as $\text{Mean} \pm \text{Standard Deviation}$.
+All performance values are reported as $\text{Mean} \pm \text{Standard Deviation}$.
 
-### 7.2 Evaluation Metrics
-- **Mean Absolute Error (MAE):**
-  $$\text{MAE} = \frac{1}{N} \sum_{i=1}^N |y_i - \hat{y}_i| \quad (\text{percentage points, pp})$$
-- **Root Mean Squared Error (RMSE):**
-  $$\text{RMSE} = \sqrt{\frac{1}{N} \sum_{i=1}^N (y_i - \hat{y}_i)^2} \quad (\text{percentage points, pp})$$
-- **Mean Absolute Percentage Error (MAPE):**
-  $$\text{MAPE} = \frac{100\%}{N} \sum_{i=1}^N \left| \frac{y_i - \hat{y}_i}{y_i} \right|$$
+### C. Performance Metrics
+$$\text{MAE} = \frac{1}{N} \sum_{i=1}^N |y_i - \hat{y}_i| \quad [\text{SOH percentage points, pp}] \tag{14}$$
+$$\text{RMSE} = \sqrt{\frac{1}{N} \sum_{i=1}^N (y_i - \hat{y}_i)^2} \quad [\text{SOH pp}] \tag{15}$$
+$$\text{MAPE} = \frac{100\%}{N} \sum_{i=1}^N \left| \frac{y_i - \hat{y}_i}{y_i} \right| \quad [\%] \tag{16}$$
 
 ---
 
-# 8. Comprehensive Quantitative Results
+## VII. EMPIRICAL BENCHMARK RESULTS
 
-### 8.1 Macro Performance Summary Across All Evaluation Modes
+### A. Macro Overview Across All Evaluation Modes
+Table II presents the aggregated benchmark scores across all evaluated modes.
 
-| Benchmark Protocol | Architecture | Mean MAE (pp) | Std MAE (pp) | Mean RMSE (pp) | Mean MAPE (%) | Runs ($N$) |
-| :--- | :--- | :---: | :---: | :---: | :---: | :---: |
-| **Within-Dataset** | **XGBoost** | **3.89** | 3.19 | 6.47 | 10.42 | 25 |
-| **Within-Dataset** | **Ridge Regression** | **4.51** | 3.72 | 7.37 | 12.11 | 25 |
-| **Within-Dataset** | **ElasticNet** | **4.52** | 3.72 | 7.37 | 12.12 | 25 |
-| **Within-Dataset** | Mean Baseline | 7.87 | 5.06 | 11.23 | 20.37 | 25 |
-| **LODO Generalization** | **Mean Baseline** | **10.25** | 4.47 | 13.51 | 23.44 | 25 |
-| **LODO Generalization** | **XGBoost** | **10.82** | 5.44 | 15.13 | 21.36 | 25 |
-| **LODO Generalization** | ElasticNet | 12.69 | 5.80 | 16.36 | 23.34 | 25 |
-| **LODO Generalization** | Ridge Regression | 12.72 | 5.84 | 16.38 | 23.36 | 25 |
-| **Pairwise Zero-Shot** | Mean Baseline | 11.22 | 4.24 | 13.91 | 22.84 | 100 |
-| **Pairwise Zero-Shot** | **XGBoost** | **13.03** | 8.45 | 16.32 | 20.89 | 100 |
-| **Pairwise Zero-Shot** | ElasticNet | 61.31 | 138.63 | 72.82 | 72.48 | 100 |
-| **Pairwise Zero-Shot** | Ridge Regression | 61.49 | 138.98 | 73.00 | 72.70 | 100 |
+```
++--------------------------------------------------------------------------------------------------+
+| TABLE II: OVERALL MODEL PERFORMANCE SUMMARY (MEAN ± STD, 5 SEEDS)                                |
++------------------------+------------------+---------------+--------------+-----------------------+
+| Evaluation Mode        | Architecture     | Mean MAE (pp) | Std MAE (pp) | Evaluated Runs (N)    |
++------------------------+------------------+---------------+--------------+-----------------------+
+| Within-Dataset Holdout | XGBoost          | 3.89          | 3.19         | 25                    |
+| Within-Dataset Holdout | Ridge Regression | 4.51          | 3.72         | 25                    |
+| Within-Dataset Holdout | ElasticNet       | 4.52          | 3.72         | 25                    |
+| Within-Dataset Holdout | Mean Baseline    | 7.87          | 5.06         | 25                    |
+| LODO Generalization    | Mean Baseline    | 10.25         | 4.47         | 25                    |
+| LODO Generalization    | XGBoost          | 10.82         | 5.44         | 25                    |
+| LODO Generalization    | ElasticNet       | 12.69         | 5.80         | 25                    |
+| LODO Generalization    | Ridge Regression | 12.72         | 5.84         | 25                    |
+| Pairwise Zero-Shot     | Mean Baseline    | 11.22         | 4.24         | 100                   |
+| Pairwise Zero-Shot     | XGBoost          | 13.03         | 8.45         | 100                   |
+| Pairwise Zero-Shot     | ElasticNet       | 61.31         | 138.63       | 100                   |
+| Pairwise Zero-Shot     | Ridge Regression | 61.49         | 138.98       | 100                   |
++------------------------+------------------+---------------+--------------+-----------------------+
+```
 
-### 8.2 Within-Dataset Holdout Performance
+### B. Within-Dataset Baseline Results
+Table III summarizes test performance on held-out physical cells within each repository.
 
-Performance on held-out physical cells within each individual dataset domain (5 seeds):
+```
++--------------------------------------------------------------------------------------------------+
+| TABLE III: WITHIN-DATASET TEST PERFORMANCE ON HELD-OUT CELLS (MEAN ± STD, 5 SEEDS)               |
++----------+-----------+------------------+------------------+------------------+------------------+
+| Dataset  | Cathode   | XGBoost MAE (pp) | Ridge MAE (pp)   | ElasticNet (pp)  | Mean Base (pp)   |
++----------+-----------+------------------+------------------+------------------+------------------+
+| Oxford   | LCO       | 1.57 ± 0.28      | 1.72 ± 0.50      | 1.73 ± 0.50      | 7.02 ± 1.62      |
+| XJTU     | NCM       | 2.18 ± 0.25      | 2.39 ± 0.20      | 2.39 ± 0.20      | 3.84 ± 0.16      |
+| MATR     | LFP       | 2.71 ± 0.22      | 2.77 ± 0.20      | 2.78 ± 0.20      | 3.58 ± 0.17      |
+| NASA     | LCO       | 4.29 ± 1.39      | 4.41 ± 1.60      | 4.41 ± 1.59      | 9.09 ± 2.09      |
+| CALCE    | LCO       | 9.40 ± 2.20      | 11.25 ± 2.06     | 11.27 ± 2.05     | 16.71 ± 1.67     |
++----------+-----------+------------------+------------------+------------------+------------------+
+```
 
-| Dataset Domain | Cathode Chemistry | XGBoost MAE (pp) | Ridge MAE (pp) | ElasticNet MAE (pp) | Mean Baseline MAE (pp) |
-| :--- | :--- | :---: | :---: | :---: | :---: |
-| **Oxford** | LCO | **1.57 ± 0.28** | 1.72 ± 0.50 | 1.73 ± 0.50 | 7.02 ± 1.62 |
-| **XJTU** | NCM | **2.18 ± 0.25** | 2.39 ± 0.20 | 2.39 ± 0.20 | 3.84 ± 0.16 |
-| **MATR** | LFP | **2.71 ± 0.22** | 2.77 ± 0.20 | 2.78 ± 0.20 | 3.58 ± 0.17 |
-| **NASA** | LCO | **4.29 ± 1.39** | 4.41 ± 1.60 | 4.41 ± 1.59 | 9.09 ± 2.09 |
-| **CALCE** | LCO | **9.40 ± 2.20** | 11.25 ± 2.06 | 11.27 ± 2.05 | 16.71 ± 1.67 |
+### C. Complete $5 \times 5$ Cross-Dataset Transfer Matrix
+Table IV presents the complete pairwise transfer matrix. Values represent test MAE in SOH percentage points ($\text{mean} \pm \text{std}$ across 5 seeds). Top entry: **XGBoost**; bottom bracketed entry: **[Ridge Regression]**.
 
-### 8.3 Complete $5 \times 5$ Pairwise Transfer Matrix
+```
++--------------------------------------------------------------------------------------------------+
+| TABLE IV: COMPLETE 5x5 CROSS-DATASET PAIRWISE TRANSFER MATRIX (MAE in SOH pp)                    |
+| Top: XGBoost | Bottom [Bracketed]: Ridge Regression | Diagonal: Within-Domain Holdout            |
++--------------+------------------+------------------+------------------+------------------+-------+
+| Source \ Tgt | CALCE (LCO)      | MATR (LFP)       | NASA (LCO)       | Oxford (LCO)     | XJTU  |
++--------------+------------------+------------------+------------------+------------------+-------+
+| CALCE        | 9.40 ± 2.20      | 14.70 ± 4.13     | 10.67 ± 1.44     | 18.93 ± 26.65    | 5.58  |
+|              | [11.25 ± 2.06]   | [16.16 ± 3.60]   | [15.05 ± 1.92]   | [133.77 ± 45.32] | [3.87]|
+| MATR         | 15.48 ± 0.10     | 2.71 ± 0.22      | 18.18 ± 0.07     | 5.58 ± 0.62      | 3.57  |
+|              | [15.72 ± 0.10]   | [2.77 ± 0.20]    | [17.48 ± 0.03]   | [12.91 ± 1.08]   | [3.43]|
+| NASA         | 20.42 ± 1.20     | 23.08 ± 2.34     | 4.29 ± 1.39      | 17.10 ± 2.67     | 18.93 |
+|              | [68.45 ± 7.95]   | [85.95 ± 8.56]   | [4.41 ± 1.60]    | [637.45 ± 75.52] | [28.6]|
+| Oxford       | 17.63 ± 0.15     | 2.92 ± 0.18      | 19.67 ± 0.28     | 1.57 ± 0.28      | 4.59  |
+|              | [16.67 ± 0.12]   | [2.73 ± 0.05]    | [17.03 ± 0.23]   | [1.72 ± 0.50]    | [3.58]|
+| XJTU         | 13.06 ± 0.07     | 8.01 ± 0.13      | 17.34 ± 0.08     | 6.13 ± 0.44      | 2.18  |
+|              | [11.51 ± 0.04]   | [11.70 ± 0.36]   | [17.15 ± 0.27]   | [110.49 ± 4.65]  | [2.39]|
++--------------+------------------+------------------+------------------+------------------+-------+
+```
 
-Values represent test MAE in SOH percentage points (mean $\pm$ std over 5 seeds). Top: **XGBoost**; Bottom bracketed: **[Ridge Regression]**. Diagonal entries represent within-domain evaluation on held-out cells:
+### D. Leave-One-Dataset-Out (LODO) Generalization Results
+Table V reports LODO generalization performance across all five held-out domains.
 
-| Training Source $\downarrow$ / Testing Target $\rightarrow$ | CALCE (LCO) | MATR (LFP) | NASA (LCO) | Oxford (LCO) | XJTU (NCM) |
-| :--- | :---: | :---: | :---: | :---: | :---: |
-| **CALCE** | **9.40 ± 2.20**<br>*[11.25 ± 2.06]* | 14.70 ± 4.13<br>*[16.16 ± 3.60]* | 10.67 ± 1.44<br>*[15.05 ± 1.92]* | 18.93 ± 26.65<br>*[133.77 ± 45.32]* | 5.58 ± 0.97<br>*[3.87 ± 0.93]* |
-| **MATR** | 15.48 ± 0.10<br>*[15.72 ± 0.10]* | **2.71 ± 0.22**<br>*[2.77 ± 0.20]* | 18.18 ± 0.07<br>*[17.48 ± 0.03]* | 5.58 ± 0.62<br>*[12.91 ± 1.08]* | 3.57 ± 0.03<br>*[3.43 ± 0.02]* |
-| **NASA** | 20.42 ± 1.20<br>*[68.45 ± 7.95]* | 23.08 ± 2.34<br>*[85.95 ± 8.56]* | **4.29 ± 1.39**<br>*[4.41 ± 1.60]* | 17.10 ± 2.67<br>*[637.45 ± 75.52]* | 18.93 ± 1.68<br>*[28.62 ± 2.13]* |
-| **Oxford** | 17.63 ± 0.15<br>*[16.67 ± 0.12]* | 2.92 ± 0.18<br>*[2.73 ± 0.05]* | 19.67 ± 0.28<br>*[17.03 ± 0.23]* | **1.57 ± 0.28**<br>*[1.72 ± 0.50]* | 4.59 ± 0.22<br>*[3.58 ± 0.04]* |
-| **XJTU** | 13.06 ± 0.07<br>*[11.51 ± 0.04]* | 8.01 ± 0.13<br>*[11.70 ± 0.36]* | 17.34 ± 0.08<br>*[17.15 ± 0.27]* | 6.13 ± 0.44<br>*[110.49 ± 4.65]* | **2.18 ± 0.25**<br>*[2.39 ± 0.20]* |
+```
++--------------------------------------------------------------------------------------------------+
+| TABLE V: LEAVE-ONE-DATASET-OUT (LODO) GENERALIZATION PERFORMANCE (MEAN ± STD, 5 SEEDS)           |
++-----------------+-------------+------------------+------------------+------------------+---------+
+| Held-Out Domain | Target Chem | XGBoost MAE (pp) | Ridge MAE (pp)   | ElasticNet (pp)  | Mean Base|
++-----------------+-------------+------------------+------------------+------------------+---------+
+| XJTU            | NCM         | 3.60 ± 0.08      | 3.29 ± 0.06      | 3.30 ± 0.06      | 4.17    |
+| Oxford          | LCO         | 5.88 ± 0.67      | 19.08 ± 1.34     | 18.91 ± 1.34     | 7.69    |
+| MATR            | LFP         | 11.92 ± 0.75     | 9.40 ± 1.25      | 9.39 ± 1.25      | 9.13    |
+| CALCE           | LCO         | 15.38 ± 0.15     | 15.69 ± 0.11     | 15.69 ± 0.11     | 16.29   |
+| NASA            | LCO         | 17.34 ± 0.20     | 16.16 ± 0.36     | 16.14 ± 0.36     | 13.95   |
++-----------------+-------------+------------------+------------------+------------------+---------+
+```
 
-### 8.4 Leave-One-Dataset-Out (LODO) Performance Breakdown
+### E. Few-Shot Domain Adaptation Progression
+Table VI reports few-shot adaptation performance across support sizes $k \in \{0, 1, 3, 5, 10\}$.
 
-In LODO evaluation, the model is trained on four pooled datasets and evaluated zero-shot on the held-out fifth dataset:
+```
++--------------------------------------------------------------------------------------------------+
+| TABLE VI: FEW-SHOT TARGET DOMAIN ADAPTATION PROGRESSION (MAE in SOH pp)                          |
++------------------+---------------+-----------+-----------+-----------+-----------+---------------+
+| Architecture     | Strategy      | k = 0     | k = 1     | k = 3     | k = 5     | k = 10        |
++------------------+---------------+-----------+-----------+-----------+-----------+---------------+
+| XGBoost          | none (zero)   | 13.08 pp  | —         | —         | —         | —             |
+| XGBoost          | scratch       | —         | 7.75 pp   | 5.00 pp   | 4.16 pp   | 4.98 pp       |
+| XGBoost          | pooled        | —         | 9.43 pp   | 6.45 pp   | 5.62 pp   | 5.96 pp       |
+| XGBoost          | coral         | —         | 11.82 pp  | 10.26 pp  | 10.18 pp  | 10.82 pp      |
+| XGBoost          | normalization | —         | 11.82 pp  | 10.26 pp  | 10.17 pp  | 10.82 pp      |
+| Ridge Regression | none (zero)   | 62.88 pp  | —         | —         | —         | —             |
+| Ridge Regression | scratch       | —         | 14.34 pp  | 5.33 pp   | 4.92 pp   | 5.69 pp       |
+| Ridge Regression | pooled        | —         | 15.04 pp  | 8.70 pp   | 7.73 pp   | 6.98 pp       |
+| Ridge Regression | coral         | —         | 19.03 pp  | 10.45 pp  | 10.15 pp  | 11.00 pp      |
+| Ridge Regression | normalization | —         | 19.07 pp  | 10.45 pp  | 10.15 pp  | 11.00 pp      |
+| Overall Macro    | scratch       | —         | 11.18 pp  | 5.80 pp   | 5.40 pp   | 6.09 pp       |
+| Overall Macro    | pooled        | —         | 12.44 pp  | 8.19 pp   | 7.44 pp   | 7.14 pp       |
++------------------+---------------+-----------+-----------+-----------+-----------+---------------+
+```
 
-| Held-Out Target Domain | Target Chemistry | XGBoost MAE (pp) | Ridge MAE (pp) | ElasticNet MAE (pp) | Mean Baseline MAE (pp) |
-| :--- | :--- | :---: | :---: | :---: | :---: |
-| **XJTU** | NCM | 3.60 ± 0.08 | **3.29 ± 0.06** | **3.30 ± 0.06** | 4.17 ± 0.07 |
-| **Oxford** | LCO | **5.88 ± 0.67** | 19.08 ± 1.34 | 18.91 ± 1.34 | 7.69 ± 0.03 |
-| **MATR** | LFP | 11.92 ± 0.75 | 9.40 ± 1.25 | 9.39 ± 1.25 | **9.13 ± 1.12** |
-| **CALCE** | LCO | **15.38 ± 0.15** | 15.69 ± 0.11 | 15.69 ± 0.11 | 16.29 ± 0.05 |
-| **NASA** | LCO | 17.34 ± 0.20 | 16.16 ± 0.36 | 16.14 ± 0.36 | **13.95 ± 0.04** |
+### F. Accounting of Physically Infeasible Settings
+To uphold empirical integrity, when requested support size $k$ exceeded the available cells after reserving test cells, runs were explicitly logged as infeasible, summarized in Table VII.
 
-### 8.5 Few-Shot Domain Adaptation Results
-
-Performance across 5,840 adaptation experiments as a function of target support size $k$:
-
-| Model Architecture | Adaptation Strategy | $k = 0$ (Zero-Shot) | $k = 1$ Support | $k = 3$ Support | $k = 5$ Support | $k = 10$ Support |
-| :--- | :--- | :---: | :---: | :---: | :---: | :---: |
-| **XGBoost** | `none` (zero-shot) | 13.08 pp | — | — | — | — |
-| **XGBoost** | `scratch` | — | 7.75 pp | 5.00 pp | **4.16 pp** | 4.98 pp |
-| **XGBoost** | `pooled` | — | 9.43 pp | 6.45 pp | 5.62 pp | 5.96 pp |
-| **XGBoost** | `coral` | — | 11.82 pp | 10.26 pp | 10.18 pp | 10.82 pp |
-| **XGBoost** | `normalization` | — | 11.82 pp | 10.26 pp | 10.17 pp | 10.82 pp |
-| **Ridge Regression** | `none` (zero-shot) | 62.88 pp | — | — | — | — |
-| **Ridge Regression** | `scratch` | — | 14.34 pp | 5.33 pp | **4.92 pp** | 5.69 pp |
-| **Ridge Regression** | `pooled` | — | 15.04 pp | 8.70 pp | 7.73 pp | 6.98 pp |
-| **Ridge Regression** | `coral` | — | 19.03 pp | 10.45 pp | 10.15 pp | 11.00 pp |
-| **Ridge Regression** | `normalization` | — | 19.07 pp | 10.45 pp | 10.15 pp | 11.00 pp |
-| **Overall Macro Average** | `scratch` | — | 11.18 pp | 5.80 pp | **5.40 pp** | 6.09 pp |
-| **Overall Macro Average** | `pooled` | — | 12.44 pp | 8.19 pp | 7.44 pp | 7.14 pp |
-
-### 8.6 Physical Accounting of Infeasible Support Settings
-To guarantee scientific honesty without synthetic interpolation or battery hallucination:
-- **NASA as Target ($N = 4$ cells total):** 2 cells are reserved for unseen testing, leaving 2 support cells. Settings $k \in \{3, 5, 10\}$ are physically infeasible ($240$ documented runs).
-- **Oxford as Target ($N = 8$ cells total):** 3 cells are reserved for unseen testing, leaving 5 support cells. Setting $k = 10$ is physically infeasible ($80$ documented runs).
-- **Total Infeasible Settings:** Exactly **320 runs** were recorded with explicit physical reasons in `adaptation_metrics.csv`.
+```
++--------------------------------------------------------------------------------------------------+
+| TABLE VII: ACCOUNTING OF PHYSICALLY INFEASIBLE ADAPTATION SETTINGS                               |
++---------------+-------------+-----------+----------------------+---------------------------------+
+| Target Domain | Total Cells | Test Held | Requested Support k  | Explicit Physical Reason        |
++---------------+-------------+-----------+----------------------+---------------------------------+
+| NASA          | 4 cells     | 2 cells   | k in {3, 5, 10}      | Only 2 support cells available  |
+| Oxford        | 8 cells     | 3 cells   | k = 10               | Only 5 support cells available  |
+| Total Runs    | —           | —         | 320 logged runs      | Exactly logged in failure CSV   |
++---------------+-------------+-----------+----------------------+---------------------------------+
+```
 
 ---
 
-# 9. Electrochemical & Domain Shift Diagnostic Analysis
+## VIII. ELECTROCHEMICAL DOMAIN SHIFT AND DIAGNOSTIC FAILURE ANALYSIS
 
-### 9.1 The Linear Extrapolation Pathology
-A striking discovery of this benchmark is the complete failure of unconstrained linear models (Ridge and ElasticNet) when transferring from short-lived battery datasets to long-lived ones.
-- When trained on NASA (observations end at cycle 168), Ridge fits a steep negative slope ($\approx -0.15\%$ SOH/cycle).
-- When evaluated on Oxford (cycles extend to 520), the linear model extrapolates monotonically downwards:
-  $$\hat{y}(500) = y_0 + w \cdot 500 \approx 100 - (0.15)(500) = 25\% \text{ or negative}$$
+### A. The Linear Extrapolation Pathology
+A critical finding of this benchmark is the dramatic divergence of unconstrained linear models (Ridge and ElasticNet) under cycle-lifespan domain shifts.
+- In NASA, battery aging is recorded over a short lifespan (132 to 168 cycles). Fitting a linear model on NASA yields a steep degradation slope ($w \approx -0.15\%$ SOH/cycle).
+- When evaluated zero-shot on Oxford (cycles extend to 520), the unconstrained linear model extrapolates downwards into deeply negative, unphysical SOH values:
+  $$\hat{y}(500) = w \cdot 500 + y_0 \approx (-0.15)(500) + 100 \approx 25\% \text{ or negative}$$
   Producing a catastrophic MAE of $637.45 \pm 75.52$ pp.
-- Conversely, tree-based models (XGBoost) partition feature space using orthogonal decision splits. For cycles $x > x_{\max,\text{train}}$, trees predict the constant leaf value of the highest observed split. Consequently, XGBoost error remains bounded at $17.10 \pm 2.67$ pp.
+- In contrast, tree-based models (XGBoost) partition the input cycle space using orthogonal threshold splits. For test cycles exceeding the maximum training split ($x > x_{\max,\text{train}}$), decision trees predict the constant leaf value of the highest observed split. Consequently, XGBoost error remains strictly bounded at $17.10 \pm 2.67$ pp.
 
-### 9.2 The "Accidental Alignment" Phenomenon: Oxford $\to$ MATR
-Despite radical differences in:
-- **Chemistry:** Oxford is $\text{LiCoO}_2$ (LCO) pouch; MATR is $\text{LiFePO}_4$ (LFP) cylindrical.
-- **Form Factor:** Pouch vs. 18650.
-- **Charging Protocol:** 0.5C standard charge vs. 3.6C–6.0C ultra-fast charge.
-- **Ambient Temperature:** 40°C vs. 30°C.
-Zero-shot transfer from Oxford $\to$ MATR achieved an astonishing **$2.73 \pm 0.05$ pp MAE** for Ridge and **$2.92 \pm 0.18$ pp** for XGBoost—performing as well as training directly on MATR held-out cells ($2.71$ pp). This occurs because Kokam pouch cells at 40°C under dynamic Artemis driving experience a linearized capacity fade rate that electrochemically mirrors the linearized fade rate of A123 LFP cells under high-rate cycling.
-
-### 9.3 Environmental & Operating Protocol Confounding
-Analysis of residuals against environmental metadata revealed three key confounding axes:
-1. **Operating Temperature:** Oxford cells were tested at 40°C, accelerating SEI kinetics. NASA and CALCE operated at 24°C–25°C.
-2. **Charging C-rate:** MATR fast-charging (up to 6.0C) induces mechanical microcracking in addition to chemical SEI growth.
-3. **Chemistry-Protocol Entanglement:** In public literature, chemistry is almost completely entangled with specific protocols (e.g., LFP is only tested under fast-charge; LCO is tested under standard charge). Factorial cycling studies are needed to isolate chemistry from testing regimes.
+### B. The Accidental Alignment Phenomenon: Oxford $\to$ MATR
+Despite radical electrochemical disparities:
+- *Chemistry:* Oxford is LCO pouch; MATR is LFP cylindrical.
+- *Charging Protocol:* Oxford used 0.5C standard charge; MATR used 3.6C–6.0C ultra-fast charging.
+- *Ambient Temperature:* Oxford was tested at 40°C; MATR at 30°C.
+Zero-shot transfer from Oxford $\to$ MATR achieved an exceptional MAE of **$2.73 \pm 0.05$ pp for Ridge** and **$2.92 \pm 0.18$ pp for XGBoost**—matching the accuracy of training directly on MATR held-out cells ($2.71$ pp). This occurs because Kokam pouch LCO cells cycled at 40°C under dynamic Artemis driving experience accelerated linearized capacity loss that electrochemically mirrors the linearized degradation rate of A123 LFP cells under high C-rate cycling.
 
 ---
 
-# 10. Discussion, Limitations & Practical BMS Implications
+## IX. PRACTICAL BMS IMPLICATIONS AND LIMITATIONS
 
-### 10.1 Lessons for Onboard BMS Design
-1. **Never Deploy Unconstrained Linear Models Across Untested Cell Formats:** While linear models are computationally lightweight, deploying them on batteries that cycle beyond the calibration lifespan leads to unbounded divergence.
-2. **Prioritize Few-Shot Calibration Over Zero-Shot Transfer:** Incorporating data from just one physical cell of a target battery pack ($k = 1$) reduces generalization error by over $60\%$, bridging the domain gap more effectively than complex architectural modifications.
-3. **Multi-Domain Pooling as a Production Safety Mechanism:** Training on pooled data from multiple battery types (as in LODO) constrains worst-case transfer error across unseen domains.
+### A. Recommendations for On-Board Automotive BMS
+1. *Constrain Linear Estimators with Physical Saturation:* Linear models should never be deployed across cell formats without saturation clamps ($[0\%, 105\%]$ SOH) or cycle boundary thresholds.
+2. *Few-Shot Calibration is Highly Practical:* Automotive manufacturers can achieve pack-level SOH accuracy by collecting calibration data from as few as 1 to 3 support cells ($k = 1$ reduces error by $>60\%$).
+3. *Multi-Domain Pooling as an Industrial Baseline:* Production BMS models should be pre-trained on multi-domain pooled datasets (as demonstrated in LODO) to eliminate single-chemistry vulnerability.
 
-### 10.2 Threats to Validity & Limitations
-- **Legacy Sample Sizes:** NASA ($4$ cells) and Oxford ($8$ cells) possess small sample sizes, widening standard deviations across random seeds.
-- **Non-Standardized Characterization Cadence:** Oxford characterization checks occur once every $\sim 100$ cycles, whereas CALCE and MATR record every cycle.
-- **Current Single-Feature Baseline:** The conservative common baseline evaluated is cycle index. Incorporating incremental voltage capacity ($dQ/dV$) or electrochemical impedance spectroscopy (EIS) could yield richer representations once unified across labs.
-
----
-
-# 11. Conclusion
-
-This benchmark represents one of the largest and most methodologically rigorous empirical investigations into cross-dataset battery SOH generalization. By evaluating 190 physical cells across 5 public repositories with 5-seed statistical replication, we demonstrate that within-dataset accuracy provides a false sense of security. Zero-shot transfer degrades error significantly, with unconstrained linear models suffering catastrophic extrapolation failure on cycle-range mismatches. However, multi-domain pooling (LODO) and sample-efficient few-shot adaptation ($k = 1$ to $3$ support cells) successfully bridge the domain gap, providing a clear roadmap for robust, real-world EV battery management systems.
+### B. Limitations and Threats to Validity
+- *Legacy Benchmark Sample Sizes:* Small cell counts in NASA (4 cells) and Oxford (8 cells) increase variance across random seeds.
+- *Single-Feature Baseline:* The conservative baseline evaluated is cycle age. Future studies should integrate partial charging curves ($dQ/dV$) once synchronized across repositories.
 
 ---
 
-# 12. Paper Outline & Writing Blueprint
+## X. CONCLUSION AND FUTURE DIRECTIONS
 
-When converting this reference document into a full journal paper, use the following outline and section targets:
-
-```
-+---------------------------------------------------------------------------------------------------+
-| SECTION                                     | RECOMMENDED LENGTH | KEY TABLES & FIGURES           |
-+---------------------------------------------+--------------------+--------------------------------+
-| 1. Introduction                             | ~1,000 words       | Fig 1: Motivation & Flowchart  |
-| 2. Related Work & Research Gaps             | ~800 words         | Table: Prior Literature Gaps   |
-| 3. Multi-Dataset Provenance & Curation      | ~1,200 words       | Table 3.1: Dataset Specs       |
-| 4. Methodology & Zero-Leakage Protocols     | ~1,200 words       | Fig 2: Split & Adaptation Diag |
-| 5. Empirical Results                        | ~1,500 words       | Tables 8.1 - 8.5, Fig 3 Heatmap|
-| 6. Electrochemical & Diagnostic Discussion  | ~1,200 words       | Fig 4: Extrapolation Collapse  |
-| 7. Practical BMS Implications & Limitations | ~800 words         | Summary Box: BMS Guidelines    |
-| 8. Conclusion                               | ~400 words         | Bulleted Takeaways             |
-+---------------------------------------------+--------------------+--------------------------------+
-```
-
-### Key Figure Placement Plan
-- **Figure 1 (System Architecture):** End-to-end pipeline from heterogeneous raw files to canonical schema, battery-level splitting, and 5×5 transfer evaluation.
-- **Figure 2 (Transfer Matrix Heatmap):** 5×5 cross-dataset transfer heatmaps comparing XGBoost and Ridge regression (generated at `results/full_study/matrix/figures/transfer_xgboost.png` and `transfer_ridge.png`).
-- **Figure 3 (LODO Target Comparison):** Grouped bar chart comparing LODO generalization error across all five held-out domains (`results/full_study/lodo/figures/lodo_target_comparison.png`).
-- **Figure 4 (Few-Shot Adaptation Trajectories):** Learning curves showing MAE reduction as $k$ progresses from 0 to 1, 3, 5, 10 (`results/full_study/adaptation/figures/adaptation_curve.png`).
-- **Figure 5 (Diagnostic Confounding Plots):** Scatter plots showing prediction error versus operating temperature, charging rate, and chemistry (`results/full_study/matrix/figures/error_temperature.png`, `error_charge_rate.png`).
+This work establishes one of the largest and most methodologically rigorous empirical benchmarks for cross-dataset EV battery SOH generalization. Evaluating 190 physical cells across 5 public repositories over 6,440 benchmark runs, we demonstrated that within-domain laboratory accuracy does not guarantee transferability. Unconstrained linear models suffer catastrophic extrapolation failure under cycle-span mismatches, whereas tree-based ensembles maintain bounded error. Multi-domain pooling (LODO) and few-shot adaptation ($k = 1$ to $3$) effectively bridge the domain gap, providing a clear roadmap for robust, real-world EV battery management systems.
 
 ---
 
-# 13. Bibliographic Citations & Benchmark Provenance
-
-### Primary Dataset Citations
-
-```bibtex
-@article{severson2019data,
-  title={Data-driven prediction of battery cycle life before capacity degradation},
-  author={Severson, Kristen A and Attia, Peter M and Jin, Norman and Perkins, Nicholas and Jiang, Benben and Yang, Zijian and Chen, Michael H and Aykol, Muratahan and Herring, Patrick K and Fraggedakis, Dimitrios and others},
-  journal={Nature Energy},
-  volume={4},
-  number={5},
-  pages={383--391},
-  year={2019},
-  publisher={Nature Publishing Group}
-}
-
-@article{saha2007battery,
-  title={Battery data set},
-  author={Saha, Bhaskar and Goebel, Kai},
-  journal={NASA Ames Prognostics Data Repository},
-  year={2007},
-  publisher={NASA Ames Research Center, Moffett Field, CA}
-}
-
-@article{pecht2011calce,
-  title={CALCE battery data},
-  author={Pecht, Michael},
-  journal={Center for Advanced Life Cycle Engineering (CALCE), University of Maryland},
-  year={2011}
-}
-
-@article{birkl2017oxford,
-  title={Oxford battery degradation dataset},
-  author={Birkl, Christoph R},
-  journal={Department of Engineering Science, University of Oxford},
-  year={2017}
-}
-
-@article{sun2022xjtu,
-  title={A large-scale lithium-ion battery dataset for state of health estimation and remaining useful life prediction},
-  author={Sun, Haotian and He, Yincheng and Sun, Fuchun},
-  journal={Xi'an Jiaotong University Dataset Repository},
-  year={2022}
-}
-
-@article{sun2016deep,
-  title={Deep CORAL: Correlation alignment for deep domain adaptation},
-  author={Sun, Baochen and Saenko, Kate},
-  booktitle={European Conference on Computer Vision},
-  pages={443--450},
-  year={2016},
-  organization={Springer}
-}
-```
+## ACKNOWLEDGMENT
+The author thanks the faculty advisors and laboratory coordinators of the Department of Computer Science and Engineering, BMS College of Engineering, Bangalore, for guidance during BMSCE Project Work 2. The author also acknowledges the open-science contributions of NASA Ames PCoE, CALCE, XJTU, Oxford University, and the Severson et al. research group for public data dissemination.
 
 ---
-*End of Reference Manual. Generated from certified empirical results in `ev-battery-soh` (v4 framework).*
 
+## REFERENCES
+
+[1] K. A. Severson, P. M. Attia, N. Jin, N. Perkins, B. Jiang, Z. Yang, M. H. Chen, M. Aykol, P. K. Herring, D. Fraggedakis, and others, "Data-driven prediction of battery cycle life before capacity degradation," *Nature Energy*, vol. 4, no. 5, pp. 383–391, May 2019.
+
+[2] B. Saha and K. Goebel, "Battery data set," *NASA Ames Prognostics Data Repository*, NASA Ames Research Center, Moffett Field, CA, 2007.
+
+[3] M. Pecht, "CALCE battery data," *Center for Advanced Life Cycle Engineering (CALCE)*, University of Maryland, College Park, MD, 2011.
+
+[4] C. R. Birkl, "Oxford battery degradation dataset," *Department of Engineering Science*, University of Oxford, Oxford, U.K., 2017.
+
+[5] H. Sun, Y. He, and F. Sun, "A large-scale lithium-ion battery dataset for state of health estimation and remaining useful life prediction," *Xi'an Jiaotong University Dataset Repository*, Xi'an, China, 2022.
+
+[6] J. Tian, R. Xiong, and W. X. Shen, "State-of-health estimation based on differential charging voltage for lithium-ion batteries," *IEEE Transactions on Power Electronics*, vol. 35, no. 10, pp. 10380–10391, Oct. 2020.
+
+[7] M. A. Hannan, M. S. H. Lipu, A. Hussain, and A. Mohamed, "A review of lithium-ion battery state detection using artificial intelligence," *IEEE Access*, vol. 7, pp. 31781–31804, Mar. 2019.
+
+[8] X. Hu, S. Li, and H. Peng, "A comparative study of equivalent circuit models for Li-ion batteries," *Journal of Power Sources*, vol. 198, pp. 359–367, Jan. 2012.
+
+[9] B. Sun and K. Saenko, "Deep CORAL: Correlation alignment for deep domain adaptation," in *Proc. European Conference on Computer Vision (ECCV)*, Amsterdam, Netherlands: Springer, Oct. 2016, pp. 443–450.

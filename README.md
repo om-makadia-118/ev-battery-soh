@@ -1,112 +1,182 @@
-# Cross-Dataset Generalization of EV Battery State-of-Health Prediction
+# Cross-Dataset Generalization of Machine-Learning Models for EV Battery State-of-Health Prediction
 
-A reproducible Python research pipeline based on the supplied BMSCE Project Work 2 report.
+[![Tests](https://img.shields.io/badge/tests-30%20passed%2C%201%20skipped-success)](tests/)
+[![Python](https://img.shields.io/badge/python-3.11%20%7C%203.14-blue)](pyproject.toml)
+[![Framework](https://img.shields.io/badge/framework-v4%20Certified-teal)](battery_soh/)
+[![Benchmark](https://img.shields.io/badge/benchmark-6%2C440%20runs%20(5%20seeds)-orange)](results/full_study/)
+[![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
-> **Research integrity:** no real benchmark scores are bundled or claimed. Synthetic demo data are only for software smoke tests. Dataset acquisition, source metadata, actual cell counts and feature compatibility must be verified before research claims are made.
+**Institutional Context:** BMS College of Engineering (BMSCE) — Project Work 2 (Phase 2 Completed)  
+**Author:** Divyam Jain  
+**Repository:** [https://github.com/om-makadia-118/ev-battery-soh](https://github.com/om-makadia-118/ev-battery-soh)
 
-## Hardware plan — no local GPU required
+---
 
-- **Windows PC (CPU):** dataset inspection, raw-data conversion, SOH calculation, quality checks, classical models (mean/Ridge/ElasticNet/XGBoost), battery-level splitting, plots and result aggregation.
-- **Google Colab GPU:** LSTM, 1D-CNN and Transformer benchmark runs. The notebook is `notebooks/colab_deep_learning.ipynb`.
-- **Optional local deep learning:** install CPU-only PyTorch using `requirements-cpu-torch.txt`; it will run without CUDA but may be slower.
+## 📌 Executive Summary
 
-## Local setup (Windows PowerShell)
+State-of-Health (SOH) estimation is critical for electric vehicle (EV) safety, range estimation, and battery retirement. However, conventional data-driven research predominantly evaluates models on homogeneous laboratory batches with random cycle splitting—masking severe domain shift vulnerabilities.
 
-```powershell
+This project delivers an end-to-end, zero-leakage empirical benchmark investigating **cross-dataset generalization and few-shot domain adaptation** across five prominent open-access battery repositories:
+- **NASA Ames PCoE** ($\text{LiCoO}_2$, 2.0 Ah, 24°C, 4 cells)
+- **University of Maryland CALCE** ($\text{LiCoO}_2$ CS2, 1.1 Ah, 25°C, 15 cells)
+- **Xi'an Jiaotong University (XJTU)** ($\text{LiNiCoMnO}_2$, 2.0 Ah, 25°C–45°C, 23 cells)
+- **University of Oxford** ($\text{LiCoO}_2$ pouch, 0.74 Ah, 40°C, 8 cells)
+- **MIT-Stanford-Toyota (MATR / Severson et al.)** ($\text{LiFePO}_4$, 1.1 Ah, 30°C, 140 cells)
+
+Evaluating **190 physical battery cells** and **132,389 validated cycle observations** across four model architectures and five random seeds (`11, 22, 33, 44, 55`), we executed 6,440 total benchmark and adaptation runs with zero synthetic data.
+
+---
+
+## 🔬 Core Empirical Findings
+
+| Evaluation Protocol | XGBoost MAE (pp) | Ridge Regression (pp) | ElasticNet (pp) | Naive Mean Baseline (pp) | Evaluated Runs ($N$) |
+| :--- | :---: | :---: | :---: | :---: | :---: |
+| **Within-Dataset Holdout** | **3.89 ± 3.19** | **4.51 ± 3.72** | 4.52 ± 3.72 | 7.87 ± 5.06 | 25 |
+| **LODO Generalization** | **10.82 ± 5.44** | 12.72 ± 5.84 | 12.69 ± 5.80 | 10.25 ± 4.47 | 25 |
+| **Zero-Shot Pairwise Transfer** | **13.03 ± 8.45** | 61.49 ± 138.98 | 61.31 ± 138.63 | 11.22 ± 4.24 | 100 |
+
+1. **Within-Domain Accuracy Does Not Transfer Zero-Shot:** While XGBoost achieves $3.89 \pm 3.19$ percentage points (pp) MAE on held-out cells of the same domain, zero-shot transfer degrades error to $13.03 \pm 8.45$ pp.
+2. **Linear Models Suffer Catastrophic Extrapolation Divergence:** When transferring from short cycle lifespans (NASA 168 cycles) to longer lifespans (Oxford 520 cycles), unconstrained linear models extrapolate into deeply negative unphysical SOH ($637.45 \pm 75.52$ pp MAE), whereas tree-based ensembles (XGBoost) remain bounded ($17.10 \pm 2.67$ pp).
+3. **Multi-Domain Pooling (LODO) Tames Linear Instability:** In Leave-One-Dataset-Out evaluation, training on four pooled domains eliminates single-source blowups, pulling Ridge error down to $12.72 \pm 5.84$ pp.
+4. **Few-Shot Adaptation is Highly Sample-Efficient:** Supplying just $k = 1$ target support battery slashes transfer MAE from $37.49$ pp to $11.18$ pp across all models ($7.75$ pp for XGBoost), while $k = 3$ to $5$ target cells restore accuracy to within-domain baseline parity ($4.16$ pp for XGBoost).
+
+---
+
+## 🚀 Quick Start & Installation
+
+### 1. Clone & Set Up Environment
+
+```bash
+# Clone the repository
+git clone https://github.com/om-makadia-118/ev-battery-soh.git
 cd ev-battery-soh
-py -3.11 -m venv .venv
-.\.venv\Scripts\Activate.ps1
-python -m pip install --upgrade pip
+
+# Create and activate Python virtual environment
+python3 -m venv .venv
+source .venv/bin/activate       # On macOS/Linux
+# .venv\Scripts\activate        # On Windows PowerShell
+
+# Install dependencies in editable mode
+pip install --upgrade pip
 pip install -r requirements.txt
-pip install -e . --no-deps
+pip install -e . --no-deps --no-build-isolation
 ```
 
-Optional CPU-only PyTorch (not needed for classical experiments):
-
-```powershell
-pip install -r requirements-cpu-torch.txt
+### 2. Verify the Test Suite
+Run the 30-test unit and integration test suite:
+```bash
+pytest tests/ -v
+# Output: 30 passed, 1 skipped in ~1.5s
 ```
 
-Run tests and the clearly labelled synthetic smoke test:
+### 3. Launch the Interactive Research Dashboard
+Launch the presentation dashboard to explore interactive heatmaps, LODO charts, adaptation curves, and the live SOH inference simulator:
+```bash
+streamlit run streamlit_app.py
+```
+Open **`http://localhost:8501`** in your browser.
 
-```powershell
-$env:PYTHONPATH = "."
-pytest -q
-python -m battery_soh demo
+---
+
+## 💻 Running the Benchmarks
+
+### 1. Classical Matrix & LODO Benchmark (CPU)
+Run the 5-seed benchmark across all four classical models:
+```bash
+python scripts/run_study.py --phase benchmark --models mean ridge elasticnet xgboost --seeds 11 22 33 44 55 --output results/full_study
 ```
 
-## Current dataset decisions
-
-Read **[docs/DATASETS.md](docs/DATASETS.md)** before downloading more files. Important corrections to the original report's table:
-
-- NASA files `B0005/B0006/B0007/B0018` represent **4 cells**, not 28.
-- The 15 `XJTU_3C_battery-*.pkl` files are XJTU Batch 2 (3C), not the full 55-cell XJTU dataset.
-- CALCE must be **CS2 cycling**, not the separate 144-cell Storage Data experiment. All 15 CS2 archives have been downloaded. Both Arbin Excel and CADEX tab-separated `.txt` parsers are implemented; the CADEX reader has been validated against a real CS2_8 file, and CS2_21 still needs a real-file spot check.
-- Oxford `.mat` files are read by Python; MATLAB is not required.
-- MATR is the original 124-cell Severson 2019 collection (three batch `.mat` files).
-
-## Prepare real data
-
-Place source files under `data/raw/<dataset>/` as described in `docs/DATASETS.md`.
-
-```powershell
-python -m battery_soh inspect --path "data/raw/oxford/Oxford_Battery_Degradation_Dataset_1.mat"
-python -m battery_soh inspect --path "data/raw/xjtu/XJTU_3C_battery-1.pkl"
-python -m battery_soh prepare --raw data/raw
+### 2. Few-Shot Domain Adaptation Benchmark
+Run few-shot adaptation ($k \in \{0, 1, 3, 5, 10\}$) across all 20 source-target domain pairs:
+```bash
+python scripts/run_study.py --phase adaptation --models mean ridge elasticnet xgboost --seeds 11 22 33 44 55 --output results/full_study
 ```
 
-The XJTU loader supports the standardized BatteryLife pickle structure. Inspect one file first; if it matches the documented structure, all matching `XJTU*.pkl` files are loaded automatically. The CALCE Arbin parser reads all date-named `Channel_*` sheets per cell, corrects cycle-index resets across files, derives capacity from the cumulative discharge counter, and keeps only full-discharge capacity checks. The CADEX parser reads CS2_8/CS2_21 tab-separated logs, integrates discharge current over time to obtain Ah, and uses the `Capacity` field only as a step-completion heuristic—not as an Ah label. The CS2_8 parser has been checked against a real user-supplied file; inspect a CS2_21 file to confirm the same layout.
+### 3. Deep Learning Sequence Models (Google Colab GPU)
+For sequence models (LSTM, 1D-CNN, Transformer):
+1. Open [`notebooks/colab_deep_learning.ipynb`](notebooks/colab_deep_learning.ipynb) in Google Colab.
+2. Select **Runtime → Change runtime type → T4 GPU**.
+3. Upload `data/processed/unified.csv` and run cells in sequence.
 
-## CPU classical experiments
+---
 
-After a real `data/processed/unified.csv` exists:
+## 📁 Repository Structure
 
-```powershell
-python scripts/run_classical_cpu.py --seeds 42
+```
+ev-battery-soh/
+├── battery_soh/               # Core Python library (v4 canonical framework)
+│   ├── data/                  # Schema harmonization, loaders, and disjoint splits
+│   │   ├── features.py        # Safe feature extraction (zero target leakage)
+│   │   ├── loaders.py         # Native parsers: NASA, CALCE, XJTU, Oxford, MATR
+│   │   ├── schema.py          # SOH definition and physical bounds validation
+│   │   └── splits.py          # Strict battery-disjoint train/val/test splitting
+│   ├── evaluation/            # Evaluation metrics and figure generation
+│   │   ├── metrics.py         # MAE, RMSE, MAPE regression metrics
+│   │   └── plots.py           # Heatmaps, rankings, LODO, and adaptation curves
+│   ├── experiments/           # Benchmark and adaptation execution engines
+│   │   ├── adaptation.py      # Few-shot adaptation (scratch, pooled, coral, norm)
+│   │   └── engine.py          # Matrix, LODO, and within-domain runners
+│   └── models/                # Model implementations
+│       ├── classical.py       # Mean, Ridge, ElasticNet, XGBoost wrappers
+│       └── deep.py            # PyTorch LSTM, 1D-CNN, Transformer regressors
+├── data/                      # Data storage (raw data ignored by git)
+│   └── processed/             # Unified dataset (unified.csv, data_quality.csv)
+├── docs/                      # Technical documentation & project handoff notes
+│   ├── IMPLEMENTATION_STATUS.md # Certified implementation checklist
+│   ├── LLM_PROJECT_CONTEXT.md # Full project guidelines and audit constraints
+│   └── RESEARCH_PAPER_REFERENCE.md # IEEE format research reference
+├── notebooks/                 # GPU-accelerated deep learning
+│   └── colab_deep_learning.ipynb # Colab GPU notebook for sequence models
+├── reports/                   # Publication-grade reports and academic manuscripts
+│   ├── PROJECT_REPORT.md      # Comprehensive academic project report (BMSCE)
+│   ├── REPORT_TEMPLATE.md     # Synchronized project report
+│   └── RESEARCH_PAPER_REFERENCE.md # IEEE format research paper blueprint
+├── results/                   # Generated benchmark outputs
+│   └── full_study/            # Certified 5-seed benchmark results and figures
+│       ├── adaptation/        # Few-shot learning curves & metrics
+│       ├── lodo/              # LODO generalization bars & rankings
+│       └── matrix/            # 5x5 pairwise transfer heatmaps & CSVs
+├── scripts/                   # Command-line benchmark launchers
+│   ├── run_classical_cpu.py   # Quick CPU pilot launcher
+│   └── run_study.py           # Multi-phase 5-seed benchmark runner
+├── tests/                     # Unit and integration test suite (30 passing tests)
+├── .streamlit/                # Streamlit theme and server configuration
+├── pyproject.toml             # Package metadata and build configuration
+├── requirements.txt           # Python package dependencies
+├── streamlit_app.py           # Presentation dashboard & live what-if simulator
+└── README.md                  # This document
 ```
 
-For the five-seed classical matrix:
+---
 
-```powershell
-python scripts/run_classical_cpu.py --seeds 11 22 33 44 55
+## 🛡️ Scientific Integrity & Research Safeguards
+
+- **Strict Battery-Disjoint Splitting:** Splits partition exclusively by physical cell ID (`battery_split`). Observations from the same cell never cross partitions.
+- **Zero Target Feature Leakage:** Current-cycle capacity $Q_t$ and target $\text{SOH}_t$ are strictly forbidden from predictors.
+- **Zero Synthetic Experiments:** All benchmark scores are derived exclusively from actual raw laboratory files.
+- **No Label Interpolation:** Oxford discrete characterization checkpoints (~100 cycles) are preserved without artificial interpolation.
+- **Explicit Infeasibility Accounting:** Exactly 320 infeasible few-shot settings (NASA $k \ge 3$, Oxford $k = 10$) are logged in `adaptation_metrics.csv` due to real cell pool bounds; zero cells were fabricated.
+
+---
+
+## 📖 Key Documentation & Academic Reference
+
+- **IEEE Research Paper Reference:** [`reports/RESEARCH_PAPER_REFERENCE.md`](reports/RESEARCH_PAPER_REFERENCE.md)
+- **Comprehensive Academic Project Report:** [`reports/PROJECT_REPORT.md`](reports/PROJECT_REPORT.md)
+- **Implementation Status Audit:** [`docs/IMPLEMENTATION_STATUS.md`](docs/IMPLEMENTATION_STATUS.md)
+
+---
+
+## 📜 Citation
+
+If you find this benchmark or codebase useful in your research, please cite:
+
+```bibtex
+@misc{jain2026evbatterysoh,
+  author = {Jain, Divyam},
+  title = {Cross-Dataset Generalization and Few-Shot Adaptation of Machine-Learning Models for Electric Vehicle Battery State-of-Health Estimation},
+  year = {2026},
+  publisher = {GitHub},
+  howpublished = {\url{https://github.com/om-makadia-118/ev-battery-soh}}
+}
 ```
-
-This runs mean, Ridge, ElasticNet and XGBoost on the 5×5 within/cross matrix. Inspect `failures.csv` before interpreting the metrics.
-
-## Deep-learning experiments in Colab
-
-1. Upload the extracted project folder to `MyDrive/ev-battery-soh`.
-2. Ensure `data/processed/unified.csv` is present there.
-3. Open `notebooks/colab_deep_learning.ipynb` in Google Colab.
-4. Select **Runtime → Change runtime type → T4 GPU** if available.
-5. Run the pilot first; only then run the five-seed matrix and LODO cells.
-
-The notebook writes metrics, predictions, failures and figures back to Google Drive.
-
-## Research protocols
-
-- One row per observed capacity characterization, not one row per raw tester timestamp.
-- SOH = `100 × measured_discharge_capacity_Ah / rated_capacity_Ah`.
-- Preserve each dataset's source EOL rule; use the common 80% threshold as an additional harmonized analysis threshold.
-- Never include current-cycle measured capacity/SOH as a predictor.
-- Split by whole battery IDs, not random cycle rows.
-- Cross-dataset target cells are unseen during source model fitting.
-- Few-shot support batteries must be disjoint from target test batteries.
-- Oxford characterization checkpoints are sparse; do not interpolate unobserved SOH labels.
-- The current shared feature baseline is cycle number only. It is an age baseline, not yet a charging-curve-only estimator.
-
-## Project contents
-
-- `battery_soh/data/`: schema, dataset readers, SOH and feature handling, battery splits
-- `battery_soh/models/`: classical and PyTorch regressors
-- `battery_soh/experiments/`: within/cross/LODO and few-shot adaptation
-- `battery_soh/evaluation/`: metrics and figures
-- `scripts/run_classical_cpu.py`: CPU-only benchmark launcher
-- `scripts/inspect_downloads.ps1`: local source inspection helper
-- `notebooks/colab_deep_learning.ipynb`: Colab deep-learning workflow
-- `tests/`: synthetic unit/integration tests
-- `reports/REPORT_TEMPLATE.md`: results-writing template
-
-## Limitations still requiring real data
-
-The XJTU parser has been checked against the team's standardized pickle output. The CALCE Excel parser has been checked against a real CS2_33 workbook, and the CADEX parser has been checked against a real CS2_8 text file. MATR cell identity across batch files must be verified. No complete real five-dataset benchmark or final IEEE-style research paper has been produced yet.
