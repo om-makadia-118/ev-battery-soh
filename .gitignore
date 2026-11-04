@@ -29,10 +29,11 @@ env/
 /data/interim/**
 !/data/interim/README.md
 
-# Processed datasets (preserve schema/README)
+# Processed datasets (preserve schema/README and unified data)
 /data/processed/**
 !/data/processed/README.md
 !/data/processed/data_quality.csv
+!/data/processed/unified.csv
 
 # Model checkpoints and large binaries
 checkpoints/
