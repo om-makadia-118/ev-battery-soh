@@ -63,3 +63,14 @@ Thumbs.db
 # Local handoff archives
 ev_battery_soh_handoff.zip
 ev-battery-soh-project-v4*.zip
+
+# LaTeX build artifacts
+paper/*.aux
+paper/*.log
+paper/*.out
+paper/*.fls
+paper/*.fdb_latexmk
+paper/*.blg
+paper/*.synctex.gz
+paper/tabs/
+paper/figs/fig[0-9]_*.pdf

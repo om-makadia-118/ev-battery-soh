@@ -7,7 +7,8 @@
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
 **Institutional Context:** BMS College of Engineering (BMSCE) — Project Work 2 (Phase 2 Completed)  
-**Author:** Divyam Jain  
+**Authors:** Om Manish Makadia, Divyam Jain, Goutham T. G., D. Pranav Sai, M. Dakshayini (project guide)  
+**Department:** Artificial Intelligence and Machine Learning, BMSCE  
 **Repository:** [https://github.com/om-makadia-118/ev-battery-soh](https://github.com/om-makadia-118/ev-battery-soh)
 
 ---
@@ -23,22 +24,26 @@ This project delivers an end-to-end, zero-leakage empirical benchmark investigat
 - **University of Oxford** ($\text{LiCoO}_2$ pouch, 0.74 Ah, 40°C, 8 cells)
 - **MIT-Stanford-Toyota (MATR / Severson et al.)** ($\text{LiFePO}_4$, 1.1 Ah, 30°C, 140 cells)
 
-Evaluating **190 physical battery cells** and **132,389 validated cycle observations** across four model architectures and five random seeds (`11, 22, 33, 44, 55`), we executed 6,440 total benchmark and adaptation runs with zero synthetic data.
+Evaluating **190 physical battery cells** and **132,389 validated cycle observations** across four model architectures and five random seeds (`11, 22, 33, 44, 55`), we logged 6,440 benchmark and adaptation runs (6,120 executed plus 320 few-shot settings that were infeasible because the target dataset has too few cells), with zero synthetic data. The only predictor is the cycle index, the one input available in all five datasets; see the paper for what this does and does not show.
 
 ---
 
 ## 🔬 Core Empirical Findings
 
+Lowest MAE per row in bold. Splits are always by whole cell; the only predictor is the cycle index.
+
 | Evaluation Protocol | XGBoost MAE (pp) | Ridge Regression (pp) | ElasticNet (pp) | Naive Mean Baseline (pp) | Evaluated Runs ($N$) |
 | :--- | :---: | :---: | :---: | :---: | :---: |
-| **Within-Dataset Holdout** | **3.89 ± 3.19** | **4.51 ± 3.72** | 4.52 ± 3.72 | 7.87 ± 5.06 | 25 |
-| **LODO Generalization** | **10.82 ± 5.44** | 12.72 ± 5.84 | 12.69 ± 5.80 | 10.25 ± 4.47 | 25 |
-| **Zero-Shot Pairwise Transfer** | **13.03 ± 8.45** | 61.49 ± 138.98 | 61.31 ± 138.63 | 11.22 ± 4.24 | 100 |
+| **Within-Dataset Holdout** | **3.89 ± 3.19** | 4.51 ± 3.72 | 4.52 ± 3.72 | 7.87 ± 5.06 | 25 |
+| **LODO Generalization** | 10.82 ± 5.44 | 12.72 ± 5.84 | 12.69 ± 5.80 | **10.25 ± 4.47** | 25 |
+| **Zero-Shot Pairwise Transfer** | 13.03 ± 8.45 | 61.49 ± 138.98 | 61.31 ± 138.63 | **11.22 ± 4.24** | 100 |
 
-1. **Within-Domain Accuracy Does Not Transfer Zero-Shot:** While XGBoost achieves $3.89 \pm 3.19$ percentage points (pp) MAE on held-out cells of the same domain, zero-shot transfer degrades error to $13.03 \pm 8.45$ pp.
-2. **Linear Models Suffer Catastrophic Extrapolation Divergence:** When transferring from short cycle lifespans (NASA 168 cycles) to longer lifespans (Oxford 520 cycles), unconstrained linear models extrapolate into deeply negative unphysical SOH ($637.45 \pm 75.52$ pp MAE), whereas tree-based ensembles (XGBoost) remain bounded ($17.10 \pm 2.67$ pp).
-3. **Multi-Domain Pooling (LODO) Tames Linear Instability:** In Leave-One-Dataset-Out evaluation, training on four pooled domains eliminates single-source blowups, pulling Ridge error down to $12.72 \pm 5.84$ pp.
-4. **Few-Shot Adaptation is Highly Sample-Efficient:** Supplying just $k = 1$ target support battery slashes transfer MAE from $37.49$ pp to $11.18$ pp across all models ($7.75$ pp for XGBoost), while $k = 3$ to $5$ target cells restore accuracy to within-domain baseline parity ($4.16$ pp for XGBoost).
+1. **Within-dataset accuracy does not transfer zero-shot, and it does not beat a trivial baseline:** XGBoost reaches $3.89 \pm 3.19$ pp MAE on held-out cells of the same dataset, but zero-shot transfer degrades to $13.03 \pm 8.45$ pp. The training-mean baseline gets $11.22 \pm 4.24$ pp; XGBoost beats it in only 8 of 20 source-target pairs.
+2. **Linear models diverge when the target cycle range exceeds the source range:** NASA cells end at 168 cycles and Oxford at 8,200, so Ridge extrapolates to unphysical SOH ($637.45 \pm 75.52$ pp MAE for NASA to Oxford), whereas XGBoost stays bounded ($17.10 \pm 2.67$ pp). Across the 20 pairs, Ridge error correlates with the target/source cycle-range ratio (Spearman 0.55).
+3. **Pooling (LODO) bounds the error but does not beat the mean baseline:** LODO gives $10.82 \pm 5.44$ pp for XGBoost versus $10.25 \pm 4.47$ pp for the training mean. MATR supplies 87% of all rows, so pooled training is dominated by MATR.
+4. **Target labels help from three support cells; label-free alignment does not:** On the three targets feasible at every $k$ (CALCE, MATR, XJTU), XGBoost trained on the support cells reaches 6.22, 5.12 and 4.98 pp at $k = 3, 5, 10$ versus about 8 pp for the target-mean predictor. With $k = 1$ nothing beats the target mean (8.53 pp). CORAL and mean-variance normalisation stay at 10.8-12.9 pp.
+
+**Limits:** cycle index is the only predictor; CALCE labels are noisy (12.5% of observations below 50% SOH); NASA has 4 cells and Oxford 8. Results without CALCE give the same ordering. See `paper/paper.pdf`.
 
 ---
 
@@ -123,6 +128,7 @@ ev-battery-soh/
 │   └── processed/             # Unified dataset (unified.csv, data_quality.csv)
 ├── docs/                      # Technical documentation & project handoff notes
 │   ├── IMPLEMENTATION_STATUS.md # Certified implementation checklist
+│   ├── DATA_LICENSES.md       # Dataset sources, citations and licence notes
 │   ├── LLM_PROJECT_CONTEXT.md # Full project guidelines and audit constraints
 │   └── RESEARCH_PAPER_REFERENCE.md # IEEE format research reference
 ├── notebooks/                 # GPU-accelerated deep learning
@@ -136,7 +142,9 @@ ev-battery-soh/
 │       ├── adaptation/        # Few-shot learning curves & metrics
 │       ├── lodo/              # LODO generalization bars & rankings
 │       └── matrix/            # 5x5 pairwise transfer heatmaps & CSVs
+├── paper/                     # IEEE-format manuscript (LaTeX), references, figures, compiled PDF
 ├── scripts/                   # Command-line benchmark launchers
+│   ├── make_paper_assets.py   # Regenerates every paper table/figure from results + unified.csv
 │   ├── run_classical_cpu.py   # Quick CPU pilot launcher
 │   └── run_study.py           # Multi-phase 5-seed benchmark runner
 ├── tests/                     # Unit and integration test suite (30 passing tests)
@@ -144,6 +152,8 @@ ev-battery-soh/
 ├── pyproject.toml             # Package metadata and build configuration
 ├── requirements.txt           # Python package dependencies
 ├── streamlit_app.py           # Presentation dashboard & live what-if simulator
+├── LICENSE                    # MIT licence (code)
+├── CITATION.cff               # Citation metadata
 └── README.md                  # This document
 ```
 
@@ -167,13 +177,26 @@ ev-battery-soh/
 
 ---
 
+## 📄 Paper
+
+The manuscript (IEEE format, LaTeX) is in [`paper/`](paper/): source `paper.tex`, bibliography `refs.bib`, figures `paper/figs/`, compiled `paper/paper.pdf`.
+
+```bash
+python scripts/make_paper_assets.py     # regenerate figures, tables and paper/numbers.json
+cd paper && latexmk -pdf paper.tex      # rebuild the PDF
+```
+
+## ⚖️ License and data
+
+Code is released under the MIT licence ([`LICENSE`](LICENSE)). The five source datasets keep their own licences and must be cited; raw files (about 11.7 GB) are not redistributed. See [`docs/DATA_LICENSES.md`](docs/DATA_LICENSES.md) for download links and licence notes.
+
 ## 📜 Citation
 
 If you find this benchmark or codebase useful in your research, please cite:
 
 ```bibtex
-@misc{jain2026evbatterysoh,
-  author = {Jain, Divyam},
+@misc{makadia2026evbatterysoh,
+  author = {Makadia, Om Manish and Jain, Divyam and T. G., Goutham and Sai, D. Pranav and Dakshayini, M.},
   title = {Cross-Dataset Generalization and Few-Shot Adaptation of Machine-Learning Models for Electric Vehicle Battery State-of-Health Estimation},
   year = {2026},
   publisher = {GitHub},

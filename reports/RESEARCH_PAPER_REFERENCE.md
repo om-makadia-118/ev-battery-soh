@@ -1,3 +1,5 @@
+> **SUPERSEDED (8 Nov 2026).** This early draft contains numbers that do not match `results/full_study/` (for example the within-dataset Oxford and XJTU errors and the Oxford cycle range). The authoritative manuscript is `paper/paper.tex` (PDF: `paper/paper.pdf`).
+
 # Cross-Dataset Generalization and Few-Shot Adaptation of Machine-Learning Models for Electric Vehicle Battery State-of-Health Estimation
 
 **Divyam Jain**  
