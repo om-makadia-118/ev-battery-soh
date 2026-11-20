@@ -293,3 +293,30 @@ The entire codebase is verified with unit and integration tests passing cleanly:
 4. C. R. Birkl, "Oxford battery degradation dataset," *Department of Engineering Science*, University of Oxford, 2017.
 5. H. Sun, Y. He, and F. Sun, "A large-scale lithium-ion battery dataset for state of health estimation and remaining useful life prediction," *Xi'an Jiaotong University*, 2022.
 6. B. Sun and K. Saenko, "Deep CORAL: Correlation alignment for deep domain adaptation," in *European Conference on Computer Vision (ECCV)*, Springer, 2016, pp. 443–450.
+
+---
+
+## Appendix A: Snapshots & Empirical Verification
+
+This appendix presents verified, high-resolution project evidence corresponding to the platform implementation, data audit, benchmark results, and research dashboard. All images avoid dark backgrounds and maintain 300 DPI publication resolution.
+
+### Figure A.1: Repository Structure / Module Layout
+![Figure A.1: Repository structure and modular architecture](snapshots/figure_A1_repository_structure.png)
+*Figure A.1: Verified project architecture and package layout of `ev-battery-soh`, illustrating clean separation between raw data parsing (`battery_soh/data/parsers/`), validation (`unified_schema.py`), machine-learning models (`battery_soh/models/`), benchmark protocols (`battery_soh/experiments/`), and presentation dashboard (`streamlit_app.py`).*
+
+### Figure A.2: Data Validation Summary
+![Figure A.2: Data validation and quality assurance audit summary](snapshots/figure_A2_data_validation_summary.png)
+*Figure A.2: Multi-dataset quality assurance summary across 190 physical battery cells and 132,389 observations (NASA, CALCE, XJTU, Oxford, MATR), confirming schema compliance, physical boundary limits, monotonic cycles, and 100% automated test pass rate (30 passed tests).*
+
+### Figure A.3: Saved Benchmark Metrics and Logs
+![Figure A.3: Saved benchmark evaluation metrics and execution logs](snapshots/figure_A3_saved_benchmark_metrics.png)
+*Figure A.3: Empirical benchmark evaluation metrics summary comparing within-domain vs. cross-domain test RMSE across Ridge, ElasticNet, and XGBoost, accompanied by timestamped execution logs from `scripts/run_study.py` across 5 random seeds (500 transfer matrix runs, 100 LODO runs, 5,840 adaptation sweeps).*
+
+### Figure A.4: Cross-Dataset Result Visualization
+![Figure A.4: 5x5 Cross-dataset transfer matrix heatmap](snapshots/figure_A4_cross_dataset_result_visualization.png)
+*Figure A.4: Empirical 5×5 cross-dataset transfer matrix heatmap (XGBoost test RMSE %) demonstrating the pronounced domain gap between in-domain diagonal (3.89%) and zero-shot off-diagonal transfer (13.03%).*
+
+### Figure A.5: Read-Only Research Dashboard View
+![Figure A.5: Interactive Streamlit research dashboard overview](snapshots/figure_A5_research_dashboard.png)
+*Figure A.5: Interactive research portal (`streamlit_app.py`) providing live metric tiles, multi-dataset degradation explorers, transfer heatmaps, LODO evaluations, and real-time "What-If" SOH prediction sandboxes.*
+
